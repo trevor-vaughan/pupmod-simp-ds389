@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'puppetlabs_spec_helper/module_spec_helper'
 require 'simp/rspec-puppet-facts'
 
@@ -7,7 +9,7 @@ include Simp::RspecPuppetFacts
 
 default_facts = {
   puppetversion: Puppet.version,
-  facterversion: Facter.version,
+  facterversion: Facter.version
 }
 
 default_facts_path = File.expand_path(File.join(File.dirname(__FILE__), 'default_facts.yml'))
@@ -23,21 +25,21 @@ end
 
 # RSpec Material
 fixture_path = File.expand_path(File.join(__FILE__, '..', 'fixtures'))
-module_name = File.basename(File.expand_path(File.join(__FILE__,'../..')))
+module_name = File.basename(File.expand_path(File.join(__FILE__, '../..')))
 
 # Add fixture lib dirs to LOAD_PATH. Work-around for PUP-3336
-if Puppet.version < "4.0.0"
+if Puppet.version < '4.0.0'
   Dir["#{fixture_path}/modules/*/lib"].entries.each do |lib_dir|
     $LOAD_PATH << lib_dir
   end
 end
 
-if !ENV.key?( 'TRUSTED_NODE_DATA' )
+unless ENV.key?('TRUSTED_NODE_DATA')
   warn '== WARNING: TRUSTED_NODE_DATA is unset, using TRUSTED_NODE_DATA=yes'
-  ENV['TRUSTED_NODE_DATA']='yes'
+  ENV['TRUSTED_NODE_DATA'] = 'yes'
 end
 
-default_hiera_config =<<-EOM
+default_hiera_config = <<-EOM
 ---
 :backends:
   - "yaml"
@@ -85,12 +87,12 @@ def set_hieradata(hieradata)
   RSpec.configure { |c| c.default_facts['custom_hiera'] = hieradata }
 end
 
-if not File.directory?(File.join(fixture_path,'hieradata')) then
-  FileUtils.mkdir_p(File.join(fixture_path,'hieradata'))
+unless File.directory?(File.join(fixture_path, 'hieradata'))
+  FileUtils.mkdir_p(File.join(fixture_path, 'hieradata'))
 end
 
-if not File.directory?(File.join(fixture_path,'modules',module_name)) then
-  FileUtils.mkdir_p(File.join(fixture_path,'modules',module_name))
+unless File.directory?(File.join(fixture_path, 'modules', module_name))
+  FileUtils.mkdir_p(File.join(fixture_path, 'modules', module_name))
 end
 
 RSpec.configure do |c|
@@ -103,12 +105,12 @@ RSpec.configure do |c|
   c.module_path = File.join(fixture_path, 'modules')
   c.manifest_dir = File.join(fixture_path, 'manifests')
 
-  c.hiera_config = File.join(fixture_path,'hieradata','hiera.yaml')
+  c.hiera_config = File.join(fixture_path, 'hieradata', 'hiera.yaml')
 
   # Useless backtrace noise
   backtrace_exclusion_patterns = [
-    /spec_helper/,
-    /gems/
+    %r{spec_helper},
+    %r{gems},
   ]
 
   if c.respond_to?(:backtrace_exclusion_patterns)
@@ -118,7 +120,7 @@ RSpec.configure do |c|
   end
 
   c.before(:all) do
-    data = YAML.load(default_hiera_config)
+    data = YAML.safe_load(default_hiera_config)
     data[:yaml][:datadir] = File.join(fixture_path, 'hieradata')
 
     File.open(c.hiera_config, 'w') do |f|
@@ -131,7 +133,7 @@ RSpec.configure do |c|
 
     if defined?(environment)
       set_environment(environment)
-      FileUtils.mkdir_p(File.join(@spec_global_env_temp,environment.to_s))
+      FileUtils.mkdir_p(File.join(@spec_global_env_temp, environment.to_s))
     end
 
     # ensure the user running these tests has an accessible environmentpath
@@ -142,9 +144,9 @@ RSpec.configure do |c|
 
     # sanitize hieradata
     if defined?(hieradata)
-      set_hieradata(hieradata.gsub(':','_'))
+      set_hieradata(hieradata.gsub(':', '_'))
     elsif defined?(class_name)
-      set_hieradata(class_name.gsub(':','_'))
+      set_hieradata(class_name.gsub(':', '_'))
     end
   end
 
@@ -158,7 +160,7 @@ end
 Dir.glob("#{RSpec.configuration.module_path}/*").each do |dir|
   begin
     Pathname.new(dir).realpath
-  rescue
-    fail "ERROR: The module '#{dir}' is not installed. Tests cannot continue."
+  rescue StandardError
+    raise "ERROR: The module '#{dir}' is not installed. Tests cannot continue."
   end
 end

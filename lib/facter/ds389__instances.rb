@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Return a Hash of the various DS389 instances on the system
 #
 # @example Instances
@@ -28,8 +30,8 @@ Facter.add('ds389__instances') do
 
       if File.exist?(admin_srv_local_conf)
         admin_srv_port = File.read(admin_srv_local_conf).lines.grep(
-          %r{configuration.nsserverport:\s+(\d+)}
-        ){ $1.to_i }.first
+          %r{configuration.nsserverport:\s+(\d+)},
+        ) { Regexp.last_match(1).to_i }.first
 
         instances['admin-srv'] = { 'port' => admin_srv_port } if admin_srv_port
       end
