@@ -1,55 +1,39 @@
 # frozen_string_literal: true
 
 require 'puppetlabs_spec_helper/module_spec_helper'
+require 'rspec-puppet'
 require 'simp/rspec-puppet-facts'
-
-require 'pathname'
-
 include Simp::RspecPuppetFacts
 
-default_facts = {
-  puppetversion: Puppet.version,
-  facterversion: Facter.version
-}
-
-default_facts_path = File.expand_path(File.join(File.dirname(__FILE__), 'default_facts.yml'))
-default_module_facts_path = File.expand_path(File.join(File.dirname(__FILE__), 'default_module_facts.yml'))
-
-if File.exist?(default_facts_path) && File.readable?(default_facts_path)
-  default_facts.merge!(YAML.safe_load(File.read(default_facts_path)))
-end
-
-if File.exist?(default_module_facts_path) && File.readable?(default_module_facts_path)
-  default_facts.merge!(YAML.safe_load(File.read(default_module_facts_path)))
-end
+require 'pathname'
 
 # RSpec Material
 fixture_path = File.expand_path(File.join(__FILE__, '..', 'fixtures'))
 module_name = File.basename(File.expand_path(File.join(__FILE__, '../..')))
 
-# Add fixture lib dirs to LOAD_PATH. Work-around for PUP-3336
-if Puppet.version < '4.0.0'
-  Dir["#{fixture_path}/modules/*/lib"].entries.each do |lib_dir|
-    $LOAD_PATH << lib_dir
-  end
+if ENV['PUPPET_DEBUG']
+  Puppet::Util::Log.level = :debug
+  Puppet::Util::Log.newdestination(:console)
 end
 
-unless ENV.key?('TRUSTED_NODE_DATA')
-  warn '== WARNING: TRUSTED_NODE_DATA is unset, using TRUSTED_NODE_DATA=yes'
-  ENV['TRUSTED_NODE_DATA'] = 'yes'
-end
-
-default_hiera_config = <<-EOM
+default_hiera_config = <<~HIERA_CONFIG
 ---
-:backends:
-  - "yaml"
-:yaml:
-  :datadir: "stub"
-:hierarchy:
-  - "%{custom_hiera}"
-  - "%{module_name}"
-  - "default"
-EOM
+version: 5
+hierarchy:
+  - name: SIMP Compliance Engine
+    lookup_key: compliance_markup::enforcement
+    options:
+      enabled_sce_versions: [2]
+  - name: Custom Test Hiera
+    path: "%{custom_hiera}.yaml"
+  - name: "%{module_name}"
+    path: "%{module_name}.yaml"
+  - name: Common
+    path: default.yaml
+defaults:
+  data_hash: yaml_data
+  datadir: "stub"
+HIERA_CONFIG
 
 # This can be used from inside your spec tests to set the testable environment.
 # You can use this to stub out an ENC.
@@ -97,10 +81,16 @@ end
 
 RSpec.configure do |c|
   # If nothing else...
-  c.default_facts = default_facts
+  c.default_facts = {
+    production: {
+      #:fqdn           => 'production.rspec.test.localdomain',
+      path: '/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin',
+      concat_basedir: '/tmp'
+    }
+  }
 
   c.mock_framework = :rspec
-  c.mock_with :mocha
+  c.mock_with :rspec
 
   c.module_path = File.join(fixture_path, 'modules')
   c.manifest_dir = File.join(fixture_path, 'manifests')
@@ -119,14 +109,24 @@ RSpec.configure do |c|
     c.backtrace_clean_patterns = backtrace_exclusion_patterns
   end
 
+  # rubocop:disable RSpec/BeforeAfterAll
   c.before(:all) do
     data = YAML.safe_load(default_hiera_config)
-    data[:yaml][:datadir] = File.join(fixture_path, 'hieradata')
+    data.each_key do |key|
+      next unless data[key].is_a?(Hash)
+
+      if data[key][:datadir] == 'stub'
+        data[key][:datadir] = File.join(fixture_path, 'hieradata')
+      elsif data[key]['datadir'] == 'stub'
+        data[key]['datadir'] = File.join(fixture_path, 'hieradata')
+      end
+    end
 
     File.open(c.hiera_config, 'w') do |f|
       f.write data.to_yaml
     end
   end
+  # rubocop:enable RSpec/BeforeAfterAll
 
   c.before(:each) do
     @spec_global_env_temp = Dir.mktmpdir('simpspec')
@@ -137,10 +137,10 @@ RSpec.configure do |c|
     end
 
     # ensure the user running these tests has an accessible environmentpath
+    Puppet[:digest_algorithm] = 'sha256'
     Puppet[:environmentpath] = @spec_global_env_temp
     Puppet[:user] = Etc.getpwuid(Process.uid).name
     Puppet[:group] = Etc.getgrgid(Process.gid).name
-    Puppet[:digest_algorithm] = 'sha256'
 
     # sanitize hieradata
     if defined?(hieradata)

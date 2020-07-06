@@ -60,7 +60,7 @@ define ds389::instance (
   simplib::assert_metadata($module_name)
 
   assert_type(Simplib::Systemd::ServiceName, $title) |$expected, $actual| {
-    warning("The \$title for ds389::instance must be a valid systemd service name matching ${expected}. Got ${actual}")
+    fail("The \$title for ds389::instance must be a valid systemd service name matching ${expected}. Got ${actual}")
   }
 
   if $title == 'admin' {
@@ -81,8 +81,26 @@ define ds389::instance (
     }
 
     # Check to make sure we're not going to have a conflict with something that's running
+    $_active_instance_ports = pick($facts['ds389__instances'], {}).map |$daemon, $data| {
+      if $daemon == "slapd-${title}" {
+        undef
+      }
+      else {
+        $data['port']
+      }
+    }
 
-    include ds389::install
+    if $port in $_active_instance_ports {
+      fail("The port '${port}' is already in use on '${facts["fqdn"]}'")
+    }
+
+    if defined_with_params(Ds389::Instance, { 'port' => $port }) {
+      fail("The port '${port}' is already selected for use by another defined catalog resource")
+    }
+
+    # We need to include this here to make sure that all of the top-level
+    # parameters propagate correctly downwards
+    include ds389
 
     $_safe_path = simplib::safe_filename($title)
 
@@ -139,11 +157,11 @@ define ds389::instance (
 
     $_ds_instance_config = "/etc/dirsrv/slapd-${_safe_path}/dse.ldif"
 
-    exec { "Setup ${name} DS":
+    exec { "Setup ${title} DS":
       command => "${ds389::install::_setup_command} --silent -f ${_ds_config_file}",
       creates => $_ds_instance_config,
       require => File[$_ds_config_file],
-      notify  => Service["dirsrv@${name}"]
+      notify  => Service["dirsrv@${title}"]
     }
 
     ensure_resource('file', $config_dir,
@@ -155,7 +173,7 @@ define ds389::instance (
       }
     )
 
-    $_ds_pw_file = "${config_dir}/ds_pw.txt"
+    $_ds_pw_file = "${config_dir}/${title}_ds_pw.txt"
 
     file { $_ds_pw_file:
       ensure  => 'present',
@@ -163,10 +181,10 @@ define ds389::instance (
       group   => 'root',
       mode    => '0400',
       content => Sensitive($_admin_password),
-      require => Exec["Setup ${name} DS"]
+      require => Exec["Setup ${title} DS"]
     }
 
-    ensure_resource('service', "dirsrv@${name}",
+    ensure_resource('service', "dirsrv@${title}",
       {
         ensure     => 'running',
         enable     => true,
@@ -174,24 +192,24 @@ define ds389::instance (
       }
     )
 
-    ds389::config::item { "Set nsslapd-listenhost on ${name}":
+    ds389::config::item { "Set nsslapd-listenhost on ${title}":
       key             => 'nsslapd-listenhost',
       value           => $listen_address,
       admin_dn        => $root_dn,
       pw_file         => $_ds_pw_file,
       ds_host         => $listen_address,
       ds_port         => $port,
-      ds_service_name => "dirsrv@${name}"
+      ds_service_name => "dirsrv@${title}"
     }
 
-    ds389::config::item { "Set nsslapd-securelistenhost on ${name}":
+    ds389::config::item { "Set nsslapd-securelistenhost on ${title}":
       key             => 'nsslapd-securelistenhost',
       value           => $listen_address,
       admin_dn        => $root_dn,
       pw_file         => $_ds_pw_file,
       ds_host         => $listen_address,
       ds_port         => $port,
-      ds_service_name => "dirsrv@${name}"
+      ds_service_name => "dirsrv@${title}"
     }
   }
   else {

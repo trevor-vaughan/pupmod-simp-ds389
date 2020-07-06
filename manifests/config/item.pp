@@ -11,7 +11,8 @@
 #   The configuration key to be set
 #
 #     * You can get a list of all configuration keys by running:
-#       ``ldapsearch -H ldap://localhost:389 -y $HOME/.dogtag/generated_configs/ds_pw.txt \
+#       ``ldapsearch -H ldap://localhost:389 \
+#       -y /usr/share/puppet_ds389_config/<instance_name>_ds_pw.txt \
 #       -D "cn=SIMP Directory Manager" -s base -b "cn=config"``
 #
 # @param value
@@ -63,7 +64,7 @@ define ds389::config::item (
   }
 
   # This should be a provider
-  exec { "Set ${base_dn},${key} on ${ds_host}":
+  exec { "Set ${base_dn},${key} on ${ds_service_name}":
     command => "echo -e \"dn: ${base_dn}\\nchangetype: modify\\nreplace: ${key}\\n${key}: ${value}\" | ldapmodify ${_ldap_command_base}",
     unless  => "test `ldapsearch ${_ldap_command_extra} ${_ldap_command_base} -LLL -s base -b '${base_dn}' ${key} | grep -e '^${key}' | awk '{ print \$2 }'` == '${value}'",
     path    => ['/bin', '/usr/bin']

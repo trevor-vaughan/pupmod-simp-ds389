@@ -4,7 +4,6 @@ require 'beaker-rspec'
 require 'tmpdir'
 require 'yaml'
 require 'simp/beaker_helpers'
-
 include Simp::BeakerHelpers
 
 unless ENV['BEAKER_provision'] == 'no'
@@ -45,11 +44,12 @@ RSpec.configure do |c|
       # add PKI keys
       copy_keydist_to(server)
     rescue StandardError, ScriptError => e
-      if ENV['PRY']
-        require 'pry'; binding.pry
-      else
-        raise e
-      end
+      raise e unless ENV['PRY']
+
+      # rubocop:disable Lint/Debugger
+      require 'pry'
+      binding.pry
+      # rubocop:enable Lint/Debugger
     end
   end
 end

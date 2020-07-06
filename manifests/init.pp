@@ -57,7 +57,7 @@ class ds389 (
 ) {
   include ds389::install
 
-  if initialize_ds_root {
+  if $initialize_ds_root {
     ds389::instance { $ds_root_name:
       base_dn                      => $base_dn,
       root_dn                      => $root_dn,

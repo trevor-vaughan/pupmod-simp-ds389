@@ -6,9 +6,7 @@ test_name 'Set up 389DS'
 
 describe 'Set up 389DS' do
   let(:manifest) do
-    <<-EOS
-      include 'ds389'
-    EOS
+    'include ds389'
   end
 
   hosts.each do |host|
@@ -23,14 +21,35 @@ describe 'Set up 389DS' do
   hosts_with_role(hosts, 'directory_server').each do |host|
     let(:ds_root_name) { 'puppet_default_root' }
     let(:admin_password) do
+      # rubocop:disable RSpec/InstanceVariable
       @admin_password ||= on(host,
                              "cat `puppet config print vardir`/simp/environments/production/simp_autofiles/gen_passwd/389-ds-#{ds_root_name}").stdout.strip
 
       @admin_password
+      # rubocop:enable RSpec/InstanceVariable
     end
 
-    context 'default setup' do
+    context 'with default setup' do
       it 'works with no errors' do
+        apply_manifest_on(host, manifest, catch_failures: true)
+      end
+
+      it 'is idempotent' do
+        apply_manifest_on(host, manifest, catch_changes: true)
+      end
+
+      it 'is not running any slapd instances' do
+        expect(on(host, 'ls /etc/dirsrv/slapd-*', accept_all_exit_codes: true).stdout.strip).to be_empty
+      end
+    end
+
+    context 'when creating the default instance' do
+      let(:hieradata) do
+        { 'ds389::initialize_ds_root' => true }
+      end
+
+      it 'works with no errors' do
+        set_hieradata_on(host, hieradata)
         apply_manifest_on(host, manifest, catch_failures: true)
       end
 
@@ -55,8 +74,9 @@ describe 'Set up 389DS' do
       let(:ds_root_name) { 'admin_test' }
       let(:hieradata) do
         {
-          'ds389::ds_root_name' => ds_root_name,
-          'ds389::port' => 390,
+          'ds389::initialize_ds_root'   => true,
+          'ds389::ds_root_name'         => ds_root_name,
+          'ds389::port'                 => 390,
           'ds389::enable_admin_service' => true
         }
       end
