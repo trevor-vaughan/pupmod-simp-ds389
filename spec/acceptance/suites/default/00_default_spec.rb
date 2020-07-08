@@ -74,9 +74,9 @@ describe 'Set up 389DS' do
       let(:ds_root_name) { 'admin_test' }
       let(:hieradata) do
         {
-          'ds389::initialize_ds_root'   => true,
-          'ds389::ds_root_name'         => ds_root_name,
-          'ds389::port'                 => 390,
+          'ds389::initialize_ds_root' => true,
+          'ds389::ds_root_name' => ds_root_name,
+          'ds389::port' => 390,
           'ds389::enable_admin_service' => true
         }
       end

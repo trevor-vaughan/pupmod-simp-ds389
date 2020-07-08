@@ -65,8 +65,8 @@ define ds389::config::item (
 
   # This should be a provider
   exec { "Set ${base_dn},${key} on ${ds_service_name}":
-    command => "echo -e \"dn: ${base_dn}\\nchangetype: modify\\nreplace: ${key}\\n${key}: ${value}\" | ldapmodify ${_ldap_command_base}",
-    unless  => "test `ldapsearch ${_ldap_command_extra} ${_ldap_command_base} -LLL -s base -b '${base_dn}' ${key} | grep -e '^${key}' | awk '{ print \$2 }'` == '${value}'",
+    command => "echo -e \"dn: ${base_dn}\\nchangetype: modify\\nreplace: ${key}\\n${key}: ${value}\" | ldapmodify ${_ldap_command_extra} ${_ldap_command_base}",
+    unless  => "test `ldapsearch ${_ldap_command_extra} ${_ldap_command_base} -LLL -s base -b '${base_dn}' '${key}' | grep -e '^${key}' | awk '{ print \$2 }'` == '${value}'",
     path    => ['/bin', '/usr/bin']
   }
 
@@ -75,6 +75,6 @@ define ds389::config::item (
   ) {
     ensure_resource('service', $ds_service_name, {})
 
-    Exec["Set ${base_dn},${key} on ${ds_host}"] ~> Service[$ds_service_name]
+    Exec["Set ${base_dn},${key} on ${ds_service_name}"] ~> Service[$ds_service_name]
   }
 }

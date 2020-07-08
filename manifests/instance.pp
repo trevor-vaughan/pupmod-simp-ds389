@@ -48,7 +48,7 @@ define ds389::instance (
   String[2]                $admin_user                   = 'admin',
   Optional[String[2]]      $admin_password               = undef,
   Simplib::Domain          $admin_domain                 = $facts['domain'],
-  Simplib::IP              $admin_service_listen_address = '0.0.0.0',
+  Simplib::IP              $admin_service_listen_address = '127.0.0.1',
   Simplib::Port            $admin_service_port           = 9830,
   String[1]                $machine_name                 = $facts['fqdn'],
   String[1]                $service_user                 = 'nobody',
@@ -81,19 +81,16 @@ define ds389::instance (
     }
 
     # Check to make sure we're not going to have a conflict with something that's running
-    $_active_instance_ports = pick($facts['ds389__instances'], {}).map |$daemon, $data| {
-      if $daemon == "slapd-${title}" {
-        undef
-      }
-      else {
-        $data['port']
+    pick($facts['ds389__instances'], {}).each |$daemon, $data| {
+      unless $daemon == "slapd-${title}" {
+        if $data['port'] == $port {
+          fail("The port '${port}' is already in use by '${daemon}'")
+        }
       }
     }
 
-    if $port in $_active_instance_ports {
-      fail("The port '${port}' is already in use on '${facts["fqdn"]}'")
-    }
-
+    # NOTE: This won't work until the following is released in stdlib
+    # https://github.com/puppetlabs/puppetlabs-stdlib/pull/1115
     if defined_with_params(Ds389::Instance, { 'port' => $port }) {
       fail("The port '${port}' is already selected for use by another defined catalog resource")
     }
@@ -128,7 +125,7 @@ define ds389::instance (
 
         [slapd]
         ServerPort=${port}
-        ServerIdentifier=${name}
+        ServerIdentifier=${title}
         Suffix=${base_dn}
         RootDN=${root_dn}
         RootDNPwd=${_admin_password}
@@ -157,8 +154,15 @@ define ds389::instance (
 
     $_ds_instance_config = "/etc/dirsrv/slapd-${_safe_path}/dse.ldif"
 
+    if $enable_admin_service {
+      $_setup_command = $ds389::install::admin_setup_command
+    }
+    else {
+      $_setup_command = $ds389::install::setup_command
+    }
+
     exec { "Setup ${title} DS":
-      command => "${ds389::install::_setup_command} --silent -f ${_ds_config_file}",
+      command => "${_setup_command} --silent -f ${_ds_config_file}",
       creates => $_ds_instance_config,
       require => File[$_ds_config_file],
       notify  => Service["dirsrv@${title}"]
@@ -173,7 +177,7 @@ define ds389::instance (
       }
     )
 
-    $_ds_pw_file = "${config_dir}/${title}_ds_pw.txt"
+    $_ds_pw_file = "${config_dir}/${_safe_path}_ds_pw.txt"
 
     file { $_ds_pw_file:
       ensure  => 'present',

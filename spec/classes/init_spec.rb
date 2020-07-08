@@ -13,9 +13,11 @@ describe 'ds389' do
         it { is_expected.not_to create_ds389__instance('puppet_default_root') }
 
         context 'when creating the default instance' do
-          let(:params) {{
-            'initialize_ds_root' => true
-          }}
+          let(:params) do
+            {
+              'initialize_ds_root' => true
+            }
+          end
 
           it { is_expected.to compile.with_all_deps }
           it { is_expected.to create_ds389__instance('puppet_default_root') }

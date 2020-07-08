@@ -53,6 +53,7 @@ RSpec/HookArgument:
 RSpec/NamedSubject:
   Exclude:
   - spec/classes/**/*
+  - spec/defines/**/*
 Style/BlockDelimiters:
   Description: Prefer braces for chaining. Mostly an aesthetical choice. Better to
     be consistent then.
