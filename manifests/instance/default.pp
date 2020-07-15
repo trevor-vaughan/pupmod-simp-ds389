@@ -77,7 +77,13 @@ class ds389::instance::default (
     $_bootstrap_ldif_content = $bootstrap_ldif_content
   }
   elsif $bootstrap_with_defaults {
-    $_bootstrap_ldif_content = epp("${module_name}/instance/bootstrap.ldif.epp")
+    $_bootstrap_ldif_content = epp("${module_name}/instance/bootstrap.ldif.epp",
+      {
+        base_dn                 => $base_dn,
+        users_group_id          => $users_group_id,
+        administrators_group_id => $administrators_group_id
+      }
+    )
   }
   else {
     $_ds_setup_ini_content = undef
