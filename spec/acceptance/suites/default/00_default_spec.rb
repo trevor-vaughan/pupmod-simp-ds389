@@ -45,7 +45,10 @@ describe 'Set up 389DS' do
 
     context 'when creating the default instance' do
       let(:hieradata) do
-        { 'ds389::initialize_ds_root' => true }
+        {
+          'ds389::initialize_ds_root' => true,
+          'ds389::bootstrap_ds_root_defaults' => true
+        }
       end
 
       it 'works with no errors' do

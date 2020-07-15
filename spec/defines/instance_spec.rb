@@ -65,8 +65,8 @@ describe 'ds389::instance', type: :define do
             inifile = IniFile.new
             inifile = inifile.parse(content).to_h
 
-            expect(inifile.keys).to eq(['General', 'slapd', 'admin'])
-            expect(inifile['General'].keys).to eq(
+            expect(inifile.keys.sort).to eq(['General', 'slapd', 'admin'].sort)
+            expect(inifile['General'].keys.sort).to eq(
               [
                 'SuiteSpotUserID',
                 'SuiteSpotGroup',
@@ -75,7 +75,7 @@ describe 'ds389::instance', type: :define do
                 'ConfigDirectoryLdapURL',
                 'ConfigDirectoryAdminID',
                 'ConfigDirectoryAdminPwd',
-              ],
+              ].sort,
             )
             expect(inifile['General']['SuiteSpotUserID']).to eq('nobody')
             expect(inifile['General']['SuiteSpotGroup']).to eq('nobody')
@@ -85,7 +85,7 @@ describe 'ds389::instance', type: :define do
             expect(inifile['General']['ConfigDirectoryAdminID']).to eq('admin')
             expect(inifile['General']['ConfigDirectoryAdminPwd']).to match(%r{^.+{8,}})
 
-            expect(inifile['slapd'].keys).to eq(
+            expect(inifile['slapd'].keys.sort).to eq(
               [
                 'ServerPort',
                 'ServerIdentifier',
@@ -95,7 +95,7 @@ describe 'ds389::instance', type: :define do
                 'SlapdConfigForMC',
                 'AddOrgEntries',
                 'AddSampleEntries',
-              ],
+              ].sort,
             )
             expect(inifile['slapd']['ServerPort']).to eq(389)
             expect(inifile['slapd']['ServerIdentifier']).to eq(title)
@@ -106,13 +106,13 @@ describe 'ds389::instance', type: :define do
             expect(inifile['slapd']['AddOrgEntries']).to eq('yes')
             expect(inifile['slapd']['AddSampleEntries']).to eq('no')
 
-            expect(inifile['admin'].keys).to eq(
+            expect(inifile['admin'].keys.sort).to eq(
               [
                 'Port',
                 'ServerAdminID',
                 'ServerAdminPwd',
                 'ServerIpAddress',
-              ],
+              ].sort,
             )
 
             expect(inifile['admin']['Port']).to eq(9830)
@@ -178,6 +178,35 @@ describe 'ds389::instance', type: :define do
               .with_ds_port(389)
               .with_ds_service_name("dirsrv@#{title}")
           }
+
+          context 'when bootstrapping with an LDIF' do
+            let(:params) do
+              {
+                base_dn: 'ou=root,dn=my,dn=domain',
+                root_dn: 'cn=Directory Manager',
+                bootstrap_ldif_content: 'some content'
+              }
+            end
+
+            it { is_expected.to compile.with_all_deps }
+
+            it {
+              expect(subject).to create_file("/usr/share/puppet_ds389_config/#{title}_ds_bootstrap.ldif")
+                .with_content(params[:bootstrap_ldif_content])
+                .that_notifies("Exec[Setup #{title} DS]")
+            }
+
+            it do
+              content = catalogue.resource("File[/usr/share/puppet_ds389_config/ds_#{title}_setup.inf]")[:content]
+
+              require 'inifile'
+
+              inifile = IniFile.new
+              inifile = inifile.parse(content).to_h
+
+              expect(inifile['slapd']['InstallLdifFile']).to eq("/usr/share/puppet_ds389_config/#{title}_ds_bootstrap.ldif")
+            end
+          end
 
           context 'when removing an instance' do
             let(:params) do

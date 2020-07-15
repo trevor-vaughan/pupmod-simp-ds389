@@ -40,8 +40,9 @@
 #
 class ds389 (
   Boolean                $initialize_ds_root           = false,
+  Boolean                $bootstrap_ds_root_defaults   = true,
   String[1]              $ds_root_name                 = 'puppet_default_root',
-  String[2]              $base_dn                      = sprintf('ou=root,%s', simplib::ldap::domain_to_dn($facts['domain'], false)),
+  String[2]              $base_dn                      = simplib::lookup('simp_options::ldap::base_dn', { 'default_value' => sprintf('ou=root,%s', simplib::ldap::domain_to_dn($facts['domain'], false)) }),
   String[2]              $root_dn                      = 'cn=Directory Manager',
   Simplib::IP            $listen_address               = '127.0.0.1',
   Simplib::Port          $port                         = 389,
@@ -53,12 +54,14 @@ class ds389 (
   String[1]              $service_user                 = 'nobody',
   String[1]              $service_group                = 'nobody',
   Hash                   $instances                    = {},
-  Simplib::PackageEnsure $package_ensure               = simplib::lookup('simp_options::package_ensure', { 'default_value'  => 'installed' })
+  Simplib::PackageEnsure $package_ensure               = simplib::lookup('simp_options::package_ensure', { 'default_value' => 'installed' })
 ) {
   include ds389::install
 
   if $initialize_ds_root {
-    ds389::instance { $ds_root_name:
+    class { 'ds389::instance::default':
+      instance_name                => $ds_root_name,
+      bootstrap_with_defaults      => $bootstrap_ds_root_defaults,
       base_dn                      => $base_dn,
       root_dn                      => $root_dn,
       listen_address               => $listen_address,

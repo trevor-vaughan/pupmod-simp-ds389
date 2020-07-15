@@ -1,5 +1,8 @@
 # ds389
 
+These are the docs:
+https://access.redhat.com/documentation/en-us/red_hat_directory_server/10/html/installation_guide/preparing_for_a_directory_server_installation-installation_overview
+
 Welcome to your new module. A short overview of the generated parts can be found in the PDK documentation at https://puppet.com/docs/pdk/latest/pdk_generating_modules.html .
 
 The README template below provides a starting point with details about what information to include in your README.

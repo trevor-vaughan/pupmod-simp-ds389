@@ -33,6 +33,12 @@
 # @param service_group
 #   The group that ``389ds`` should run as
 #
+# @param bootstrap_directory
+#   Whether or not to bootstrap the directory when initialized
+#
+# @param bootstrap_ldif_content
+#   The content that should be used to initialize the directory
+#
 # @param package_ensure
 #   What to do regarding package installation
 #
@@ -53,6 +59,7 @@ define ds389::instance (
   String[1]                $machine_name                 = $facts['fqdn'],
   String[1]                $service_user                 = 'nobody',
   String[1]                $service_group                = 'nobody',
+  Optional[String[1]]      $bootstrap_ldif_content       = undef,
   Optional[String[1]]      $ds_setup_ini_content         = undef,
   Stdlib::Absolutepath     $config_dir                   = '/usr/share/puppet_ds389_config',
   Simplib::PackageEnsure   $package_ensure               = simplib::lookup('simp_options::package_ensure', { 'default_value' => 'installed' })
@@ -112,33 +119,38 @@ define ds389::instance (
       $_ds_setup_inf = $ds_setup_ini_content
     }
     else {
-      $_ds_setup_inf = @("DS_SETUP")
-        # This file managed by Puppet
-        [General]
-        SuiteSpotUserID=${service_user}
-        SuiteSpotGroup=${service_group}
-        AdminDomain=${admin_domain}
-        FullMachineName=${machine_name}
-        ConfigDirectoryLdapURL=ldap://${facts['fqdn']}:${port}/o=NetscapeRoot
-        ConfigDirectoryAdminID=${admin_user}
-        ConfigDirectoryAdminPwd=${_admin_password}
+      if $bootstrap_ldif_content {
+        $_bootstrap_ldif_file = "${config_dir}/${_safe_path}_ds_bootstrap.ldif"
 
-        [slapd]
-        ServerPort=${port}
-        ServerIdentifier=${title}
-        Suffix=${base_dn}
-        RootDN=${root_dn}
-        RootDNPwd=${_admin_password}
-        SlapdConfigForMC=yes
-        AddOrgEntries=yes
-        AddSampleEntries=no
+        file { $_bootstrap_ldif_file:
+          owner   => 'root',
+          group   => 'root',
+          mode    => '0640',
+          content => Sensitive($bootstrap_ldif_content),
+          notify  => Exec["Setup ${title} DS"]
+        }
+      }
+      else {
+        $_bootstrap_ldif_file = undef
+      }
 
-        [admin]
-        Port=${admin_service_port}
-        ServerAdminID=${admin_user}
-        ServerAdminPwd=${_admin_password}
-        ServerIpAddress=${admin_service_listen_address}
-        | DS_SETUP
+      $_ds_setup_inf = epp("${module_name}/instance/setup.ini.epp",
+        {
+          server_identifier            => $title,
+          base_dn                      => $base_dn,
+          root_dn                      => $root_dn,
+          service_user                 => $service_user,
+          service_group                => $service_group,
+          machine_name                 => $machine_name,
+          port                         => $port,
+          admin_user                   => $admin_user,
+          admin_password               => $_admin_password,
+          admin_domain                 => $admin_domain,
+          admin_service_listen_address => $admin_service_listen_address,
+          admin_service_port           => $admin_service_port,
+          bootstrap_ldif_file          => $_bootstrap_ldif_file
+        }
+      )
     }
 
     $_ds_config_file = "${config_dir}/ds_${$_safe_path}_setup.inf"
@@ -149,7 +161,8 @@ define ds389::instance (
       mode                    => '0600',
       selinux_ignore_defaults => true,
       content                 => Sensitive($_ds_setup_inf),
-      require                 => Class['ds389::install']
+      require                 => Class['ds389::install'],
+      notify                  => Exec["Setup ${title} DS"]
     }
 
     $_ds_instance_config = "/etc/dirsrv/slapd-${_safe_path}/dse.ldif"
@@ -164,7 +177,6 @@ define ds389::instance (
     exec { "Setup ${title} DS":
       command => "${_setup_command} --silent -f ${_ds_config_file}",
       creates => $_ds_instance_config,
-      require => File[$_ds_config_file],
       notify  => Service["dirsrv@${title}"]
     }
 
