@@ -50,6 +50,8 @@ RSpec/ExpectInHook:
 RSpec/HookArgument:
   Description: Prefer explicit :each argument, matching existing module's style
   EnforcedStyle: each
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
 RSpec/NamedSubject:
   Exclude:
   - spec/classes/**/*
@@ -75,6 +77,8 @@ Style/FormatStringToken:
   EnforcedStyle: template
 Style/HashEachMethods:
   Enabled: true
+Style/HashSyntax:
+  Enabled: false
 Style/HashTransformKeys:
   Enabled: false
 Style/HashTransformValues:

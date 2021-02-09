@@ -74,7 +74,7 @@ something like the following:
 
 ```bash
 ldapsearch -x \
-  -y "/usr/share/puppet_ds389_config/puppet_default_root_ds_pw.txt" \
+  -y "/usr/share/puppet_ds389_config/puppet_default_ds_pw.txt" \
   -D "cn=Directory Manager" \
   -h `hostname -f` \
   -b "dc=your,dc=domain"
@@ -121,7 +121,7 @@ For example, to access the `test` instance:
 
 ```bash
 ldapsearch -x \
-  -y "/usr/share/puppet_ds389_config/puppet_default_root_ds_pw.txt" \
+  -y "/usr/share/puppet_ds389_config/puppet_default_ds_pw.txt" \
   -D "cn=Directory Manager" \
   -h `hostname -f` \
   -p 380 \

@@ -8,6 +8,15 @@ lookup_options:
     merge:
       strategy: deep
       knockout_prefix: --
+  ds389::config::attributes_requiring_restart:
+    merge:
+      strategy: deep
+      knockout_prefix: --
+  ds389::instance::pki::dse_config:
+    merge:
+      strategy: deep
+      knockout_prefix: --
+
 ds389::config::attributes_requiring_restart:
   - nsslapd-changelogdir
   - nsslapd-changelogmaxage
@@ -26,3 +35,8 @@ ds389::config::attributes_requiring_restart:
   - nsslapd-secureport
   - nsslapd-sslclientauth
   - nsslapd-workingdir
+
+ds389::instance::general_config:
+  nsslapd-dynamic-plugins: 'on'
+  nsslapd-allow-unauthenticated-binds: 'off'
+  nsslapd-nagle: 'off'
