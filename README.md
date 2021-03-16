@@ -33,10 +33,6 @@ enterprise-class open source LDAP server for Linux.  Options are provided to
 both create a default LDAP instance and to bootstrap it with SIMP's traditional
 LDAP hierarchy.
 
-  ---
-  > TLS connections are currently not supported, but [this is on the short list](https://simp-project.atlassian.net/browse/SIMP-8340) of future improvements.
-  ---
-
 The module is named `ds389` because Puppet modules cannot start with a digit.
 
 ## This is a SIMP module
