@@ -14,4 +14,4 @@ hierarchy:
   path: default.yaml
 defaults:
   data_hash: yaml_data
-  datadir: "/home/thanos/Work/SIMP/6.X/src/puppet/modules/ds389/spec/fixtures/hieradata"
+  datadir: "/var/local/tvaughan/Work/SIMP/6.X/src/puppet/modules/ds389/spec/fixtures/hieradata"

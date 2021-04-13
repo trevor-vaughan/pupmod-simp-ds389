@@ -56,6 +56,11 @@ define ds389::instance::tls (
       key           => 'nsslapd-minssf',
       value         => '0'
     }
+
+    ds389::instance::selinux::port { $port:
+      enable  => false,
+      default => 636
+    }
   }
   else {
     # Check to make sure we're not going to have a conflict with something that's running

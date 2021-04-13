@@ -33,9 +33,7 @@ group :system_tests do
   # Docker fixes
   gem 'beaker', :git => 'https://github.com/voxpupuli/beaker', :ref => 'e0685f9b2fb092e3a522e5a623cdc90774096bee'
   gem 'beaker-rspec'
-  #gem 'simp-beaker-helpers', ENV['SIMP_BEAKER_HELPERS_VERSION'] || ['>= 1.21.4', '< 2']
-  # Docker fixes
-  gem 'simp-beaker-helpers', :git => 'https://github.com/trevor-vaughan/rubygem-simp-beaker-helpers', :ref => 'd70e7463fd629947dc893c2aa426ce2038838535'
+  gem 'simp-beaker-helpers', ENV['SIMP_BEAKER_HELPERS_VERSION'] || ['>= 1.21.4', '< 2']
 end
 
 # Evaluate extra gemfiles if they exist

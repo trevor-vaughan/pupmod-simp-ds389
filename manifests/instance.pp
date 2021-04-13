@@ -81,8 +81,6 @@ define ds389::instance (
 ) {
   simplib::assert_metadata($module_name)
 
-  include ds389
-
   assert_type(Simplib::Systemd::ServiceName, $title) |$expected, $actual| {
     fail("The \$title for ds389::instance must be a valid systemd service name matching ${expected}. Got ${actual}")
   }
@@ -166,27 +164,12 @@ define ds389::instance (
       )
     }
 
-    if ($port != 389) and $facts['selinux_enforced'] {
-      if simplib::module_exist('simp/selinux') {
-        simplib::assert_optional_dependency($module_name, 'simp/selinux')
-        simplib::assert_optional_dependency($module_name, 'simp/vox_selinux')
-
-        include selinux::install
-      }
-      else {
-        simplib::assert_optional_dependency($module_name, 'puppet/selinux')
-      }
-
-      selinux_port { "tcp_${port}-${port}":
-        low_port  => $port,
-        high_port => $port,
-        seltype   => 'ldap_port_t',
-        protocol  => 'tcp',
-        before    => [
-          Ds389::Instance::Service[$title],
-          Exec["Setup ${title} DS"]
-        ]
-      }
+    ds389::instance::selinux::port { $port:
+      $default => 389,
+      before    => [
+        Ds389::Instance::Service[$title],
+        Exec["Setup ${title} DS"]
+      ]
     }
 
     $_ds_config_file = "${ds389::config_dir}/${$_safe_path}_ds_setup.inf"
@@ -283,6 +266,15 @@ define ds389::instance (
     exec { "Remove 389DS instance ${title}":
       command => $_ds_remove_command,
       onlyif  => "/bin/test -d /etc/dirsrv/slapd-${title}"
+    }
+
+    ds389::instance::selinux::port { $port:
+      enable  => false,
+      default => 389
+    }
+    ds389::instance::selinux::port { $secure_port:
+      enable  => false,
+      default => 636
     }
   }
 }

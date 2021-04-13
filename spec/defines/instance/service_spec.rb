@@ -6,6 +6,14 @@ describe 'ds389::instance::service', type: :define do
   context 'when on supported operating systems' do
     on_supported_os.each do |os, os_facts|
       context "with #{os}" do
+        let(:pre_condition) do
+          <<~PRECOND
+          function assert_private(){}
+
+          include ds389
+          PRECOND
+        end
+
         let(:facts) do
           os_facts
         end
