@@ -3,8 +3,9 @@
 # @author https://github.com/simp/pupmod-simp-ds389/graphs/contributors
 #
 define ds389::instance::selinux::port (
-  Simplib::Port $default,
-  Boolean       $enable   = true
+  Simplib::Port       $default,
+  Optional[String[1]] $instance = undef,
+  Boolean             $enable   = true
 ) {
   assert_private()
 
@@ -32,6 +33,11 @@ define ds389::instance::selinux::port (
       high_port => $_port,
       seltype   => 'ldap_port_t',
       protocol  => 'tcp'
+    }
+
+    if $instance {
+      Selinux_port["tcp_${_port}-${_port}"] -> Exec["Setup ${instance} DS"]
+      Selinux_port["tcp_${_port}-${_port}"] -> Ds389::Instance::Service[$instance]
     }
   }
 }

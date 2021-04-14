@@ -165,8 +165,8 @@ define ds389::instance (
     }
 
     ds389::instance::selinux::port { "${port}":
-      default => 389,
-      before  => Ds389::Instance::Service[$title]
+      instance => $title,
+      default => 389
     }
 
     $_ds_config_file = "${ds389::config_dir}/${$_safe_path}_ds_setup.inf"

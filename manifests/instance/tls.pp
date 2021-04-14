@@ -77,8 +77,8 @@ define ds389::instance::tls (
     }
 
     ds389::instance::selinux::port { "${port}":
-      default => 636,
-      before  => Ds389::Instance::Service[$title]
+      instance => $title,
+      default  => 636
     }
 
     $_pin_file = "/etc/dirsrv/slapd-${_instance_name}/pin.txt"
