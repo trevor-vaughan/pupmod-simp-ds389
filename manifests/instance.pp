@@ -9,8 +9,8 @@
 #   * NOTE: To work around certain application bugs, items with spaces may not
 #     be used in this field.
 #
-# @param admin_password
-#   The password for the ``$admin_user`` and the ``$root_dn``
+# @param root_dn_password
+#   The password for the the ``$root_dn``
 #
 #   * NOTE: To work around certain application bugs, items with spaces may not
 #     be used in this field.
@@ -23,18 +23,6 @@
 #
 # @param secure_port
 #   The port upon which to accept LDAPS connections
-#
-# @param enable_admin_service
-#   Enable the administrative interface for the GUI
-#
-# @param admin_user
-#   The administrative user for administrative GUI connections
-#
-# @param admin_service_listen_address
-#   The IP address upon which the administrative interface should listen
-#
-# @param admin_service_port
-#   The port upon which the administrative interface should listen
 #
 # @param service_user
 #   The user that ``389ds`` should run as
@@ -63,12 +51,7 @@ define ds389::instance (
   Simplib::IP                  $listen_address               = '127.0.0.1',
   Simplib::Port                $port                         = 389,
   Simplib::Port                $secure_port                  = 636,
-  Boolean                      $enable_admin_service         = false,
-  String[2]                    $admin_user                   = 'admin',
-  Optional[Pattern['^[\S]+$']] $admin_password               = undef,
-  Simplib::Domain              $admin_domain                 = $facts['domain'],
-  Simplib::IP                  $admin_service_listen_address = '127.0.0.1',
-  Simplib::Port                $admin_service_port           = 9830,
+  Optional[Pattern['^[\S]+$']] $root_dn_password               = undef,
   String[1]                    $machine_name                 = $facts['fqdn'],
   String[1]                    $service_user                 = 'dirsrv',
   String[1]                    $service_group                = 'dirsrv',
@@ -119,11 +102,11 @@ define ds389::instance (
 
     $_safe_path = simplib::safe_filename($title)
 
-    if $admin_password {
-      $_admin_password = $admin_password
+    if $root_dn_password {
+      $_root_dn_password = $root_dn_password
     }
     else {
-      $_admin_password = simplib::passgen("389-ds-${_safe_path}", { 'length' => 64, 'complexity' => 0 })
+      $_root_dn_password = simplib::passgen("389-ds-${_safe_path}", { 'length' => 64, 'complexity' => 0 })
     }
 
     if $ds_setup_ini_content {
@@ -147,26 +130,22 @@ define ds389::instance (
 
       $_ds_setup_inf = epp("${module_name}/instance/setup.ini.epp",
         {
-          server_identifier            => $title,
-          base_dn                      => $base_dn,
-          root_dn                      => $root_dn,
-          service_user                 => $service_user,
-          service_group                => $service_group,
-          machine_name                 => $machine_name,
-          port                         => $port,
-          admin_user                   => $admin_user,
-          admin_password               => $_admin_password,
-          admin_domain                 => $admin_domain,
-          admin_service_listen_address => $admin_service_listen_address,
-          admin_service_port           => $admin_service_port,
-          bootstrap_ldif_file          => $_bootstrap_ldif_file
+          server_identifier   => $title,
+          base_dn             => $base_dn,
+          root_dn             => $root_dn,
+          root_dn_password    => $_root_dn_password,
+          service_user        => $service_user,
+          service_group       => $service_group,
+          machine_name        => $machine_name,
+          port                => $port,
+          bootstrap_ldif_file => $_bootstrap_ldif_file
         }
       )
     }
 
-    ds389::instance::selinux::port { "${port}":
+    ds389::instance::selinux::port { String($port):
       instance => $title,
-      default => 389
+      default  => 389
     }
 
     $_ds_config_file = "${ds389::config_dir}/${$_safe_path}_ds_setup.inf"
@@ -183,22 +162,8 @@ define ds389::instance (
 
     $_ds_instance_config = "/etc/dirsrv/slapd-${_safe_path}/dse.ldif"
 
-    if $enable_admin_service {
-      $_setup_command = $ds389::install::admin_setup_command
-
-      # Newer versions don't have this file so we need to make a passthrough
-      file { $_setup_command:
-        target  => $ds389::install::setup_command,
-        replace => false,
-        before  => Exec["Setup ${title} DS"]
-      }
-    }
-    else {
-      $_setup_command = $ds389::install::setup_command
-    }
-
     exec { "Setup ${title} DS":
-      command => "${_setup_command} --silent -f ${_ds_config_file}",
+      command => "${ds389::install::setup_command} --silent -f ${_ds_config_file}",
       creates => $_ds_instance_config,
       notify  => Ds389::Instance::Service[$title]
     }
@@ -210,7 +175,7 @@ define ds389::instance (
       owner   => 'root',
       group   => 'root',
       mode    => '0400',
-      content => Sensitive($_admin_password),
+      content => Sensitive($_root_dn_password),
       require => Exec["Setup ${title} DS"]
     }
 
@@ -218,9 +183,9 @@ define ds389::instance (
 
     # This needs to happen first so that we can skip through to ldapi afterwards
     ds389::instance::attr::set { "Configure LDAPI for ${title}":
-      instance_name => $title,
-      attrs         => {
-        'cn=config' => {
+      instance_name    => $title,
+      attrs            => {
+        'cn=config'    => {
           'nsslapd-ldapilisten' => 'on',
           'nsslapd-localssf'    => 99999
         }
@@ -265,11 +230,11 @@ define ds389::instance (
       onlyif  => "/bin/test -d /etc/dirsrv/slapd-${title}"
     }
 
-    ds389::instance::selinux::port { "${port}":
+    ds389::instance::selinux::port { String($port):
       enable  => false,
       default => 389
     }
-    ds389::instance::selinux::port { "${secure_port}":
+    ds389::instance::selinux::port { String($secure_port):
       enable  => false,
       default => 636
     }

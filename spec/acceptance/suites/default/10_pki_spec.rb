@@ -13,7 +13,7 @@ describe '389DS with PKI' do
     let(:ds_root_name) do
       'puppet_default'
     end
-    let(:admin_password_file) do
+    let(:root_dn_password_file) do
       "/usr/share/puppet_ds389_config/#{ds_root_name}_ds_pw.txt"
     end
 
@@ -41,7 +41,7 @@ describe '389DS with PKI' do
       end
 
       it 'can not login to 389DS unencrypted' do
-        expect { on(host, %(ldapsearch -x -y "#{admin_password_file}" -D "cn=Directory_Manager" -h #{fqdn} -b "cn=tasks,cn=config")) }.to raise_error(%r{.+})
+        expect { on(host, %(ldapsearch -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -h #{fqdn} -b "cn=tasks,cn=config")) }.to raise_error(%r{.+})
       end
 
       it 'sets the environment variables for ldapsearch' do
@@ -52,15 +52,15 @@ describe '389DS with PKI' do
       end
 
       it 'can login to 389DS using STARTTLS' do
-        on(host, %(ldapsearch -ZZ -x -y "#{admin_password_file}" -D "cn=Directory_Manager" -H ldap://#{fqdn}:389 -b "cn=tasks,cn=config"))
+        on(host, %(ldapsearch -ZZ -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -H ldap://#{fqdn}:389 -b "cn=tasks,cn=config"))
       end
 
       it 'can login to 389DS using LDAPS' do
-        on(host, %(ldapsearch -x -y "#{admin_password_file}" -D "cn=Directory_Manager" -H ldaps://#{fqdn}:636 -b "cn=tasks,cn=config"))
+        on(host, %(ldapsearch -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -H ldaps://#{fqdn}:636 -b "cn=tasks,cn=config"))
       end
 
       it 'can login to 389DS via LDAPI' do
-        on(host, %(ldapsearch -x -y "#{admin_password_file}" -D "cn=Directory_Manager" -H ldapi://%2fvar%2frun%2fslapd-#{ds_root_name}.socket -b "cn=tasks,cn=config"))
+        on(host, %(ldapsearch -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -H ldapi://%2fvar%2frun%2fslapd-#{ds_root_name}.socket -b "cn=tasks,cn=config"))
       end
 
       it 'unsets the environment variables for ldapsearch' do

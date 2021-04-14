@@ -21,20 +21,6 @@ describe 'ds389::install' do
         it { is_expected.not_to contain_package('389-admin') }
         it { is_expected.not_to contain_package('389-admin-console') }
         it { is_expected.not_to contain_package('389-ds-console') }
-
-        context 'with admin enabled' do
-          let(:params) do
-            {
-              enable_admin_service: true
-            }
-          end
-
-          it { is_expected.to compile.with_all_deps }
-          it { is_expected.to contain_package('389-admin').with_ensure('present') }
-          it { is_expected.to contain_package('389-admin-console').with_ensure('present') }
-          it { is_expected.to contain_package('389-ds-console').with_ensure('present') }
-          it { is_expected.not_to contain_package('389-ds-base').with_ensure('present') }
-        end
       end
     end
   end

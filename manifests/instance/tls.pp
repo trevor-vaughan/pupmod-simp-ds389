@@ -57,7 +57,7 @@ define ds389::instance::tls (
       value         => '0'
     }
 
-    ds389::instance::selinux::port { "${port}":
+    ds389::instance::selinux::port { String($port):
       enable  => false,
       default => 636
     }
@@ -76,7 +76,7 @@ define ds389::instance::tls (
       fail("The port '${port}' is already selected for use by another defined catalog resource")
     }
 
-    ds389::instance::selinux::port { "${port}":
+    ds389::instance::selinux::port { String($port):
       instance => $title,
       default  => 636
     }

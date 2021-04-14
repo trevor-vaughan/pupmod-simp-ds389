@@ -22,7 +22,7 @@ describe 'Set up 389DS' do
 
   hosts_with_role(hosts, 'directory_server').each do |host|
     let(:ds_root_name) { 'puppet_default' }
-    let(:admin_password_file) do
+    let(:root_dn_password_file) do
       "/usr/share/puppet_ds389_config/#{ds_root_name}_ds_pw.txt"
     end
 
@@ -64,11 +64,11 @@ describe 'Set up 389DS' do
       end
 
       it 'can login to 389DS' do
-        on(host, %(ldapsearch -x -y "#{admin_password_file}" -D "cn=Directory_Manager" -h localhost -b "cn=tasks,cn=config"))
+        on(host, %(ldapsearch -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -h localhost -b "cn=tasks,cn=config"))
       end
 
       it 'can login to 389DS via LDAPI' do
-        on(host, %(ldapsearch -x -y "#{admin_password_file}" -D "cn=Directory_Manager" -H ldapi://%2fvar%2frun%2fslapd-#{ds_root_name}.socket -b "cn=tasks,cn=config"))
+        on(host, %(ldapsearch -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -H ldapi://%2fvar%2frun%2fslapd-#{ds_root_name}.socket -b "cn=tasks,cn=config"))
       end
 
       it 'contains the default entries' do
@@ -81,13 +81,13 @@ describe 'Set up 389DS' do
                  .last
                  .strip
 
-        result = on(host, %(ldapsearch -x -y "#{admin_password_file}" -D "cn=Directory_Manager" -H ldapi://%2fvar%2frun%2fslapd-#{ds_root_name}.socket -b "#{domain}")).output
+        result = on(host, %(ldapsearch -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -H ldapi://%2fvar%2frun%2fslapd-#{ds_root_name}.socket -b "#{domain}")).output
 
         expect(result.lines.grep(%r{cn=administrators,ou=Group,#{domain}})).not_to be_empty
       end
 
       it 'fails when logging in with forced encryption' do
-        expect { on(host, %(ldapsearch -ZZ -x -y "#{admin_password_file}" -D "cn=Directory_Manager" -h `hostname -f` -b "cn=tasks,cn=config")) }.to raise_error(Beaker::Host::CommandFailure)
+        expect { on(host, %(ldapsearch -ZZ -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -h `hostname -f` -b "cn=tasks,cn=config")) }.to raise_error(Beaker::Host::CommandFailure)
       end
     end
 
@@ -118,7 +118,7 @@ describe 'Set up 389DS' do
 
       it 'can login to 389DS' do
         # rubocop:disable Layout/LineLength
-        on(host, %(ldapsearch -x -y "#{admin_password_file}" -D "#{hieradata['ds389::instances'][ds_root_name]['root_dn']}" -H ldapi://%2fvar%2frun%2fslapd-#{ds_root_name}.socket -b "cn=tasks,cn=config"))
+        on(host, %(ldapsearch -x -y "#{root_dn_password_file}" -D "#{hieradata['ds389::instances'][ds_root_name]['root_dn']}" -H ldapi://%2fvar%2frun%2fslapd-#{ds_root_name}.socket -b "cn=tasks,cn=config"))
         # rubocop:enable Layout/LineLength
       end
     end
@@ -145,35 +145,6 @@ describe 'Set up 389DS' do
 
       it 'is idempotent' do
         apply_manifest_on(host, manifest, catch_changes: true)
-      end
-    end
-
-    context 'with an admin service' do
-      let(:ds_root_name) { 'admin_test' }
-      let(:hieradata) do
-        {
-          'ds389::initialize_ds_root' => true,
-          'ds389::ds_root_name' => ds_root_name,
-          'ds389::port' => 390,
-          'ds389::enable_admin_service' => true
-        }
-      end
-
-      it 'enables the admin service' do
-        set_hieradata_on(host, hieradata)
-        apply_manifest_on(host, manifest, catch_failures: true)
-      end
-
-      it 'is idempotent' do
-        apply_manifest_on(host, manifest, catch_changes: true)
-      end
-
-      it 'can login to 389DS' do
-        on(host, %(ldapsearch -x -y "#{admin_password_file}" -D "cn=Directory_Manager" -h localhost -p #{hieradata['ds389::port']} -b "cn=tasks,cn=config"))
-      end
-
-      it 'can login to 389DS via LDAPI' do
-        on(host, %(ldapsearch -x -y "#{admin_password_file}" -D "cn=Directory_Manager" -H ldapi://%2fvar%2frun%2fslapd-#{ds_root_name}.socket -b "cn=tasks,cn=config"))
       end
     end
   end

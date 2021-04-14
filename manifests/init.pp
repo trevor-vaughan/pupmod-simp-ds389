@@ -9,8 +9,8 @@
 #   * NOTE: To work around certain application bugs, items with spaces may not
 #     be used in this field.
 #
-# @param admin_password
-#   The password for the ``$admin_user`` and the ``$root_dn``
+# @param root_dn_password
+#   The password for the the ``$root_dn``
 #
 #   * NOTE: To work around certain application bugs, items with spaces may not
 #     be used in this field.
@@ -20,18 +20,6 @@
 #
 # @param port
 #   The port upon which to accept connections
-#
-# @param enable_admin_service
-#   Enable the administrative interface for the GUI
-#
-# @param admin_user
-#   The administrative user for administrative GUI connections
-#
-# @param admin_service_listen_address
-#   The IP address upon which the administrative interface should listen
-#
-# @param admin_service_port
-#   The port upon which the administrative interface should listen
 #
 # @param service_user
 #   The user that ``389ds`` should run as
@@ -54,11 +42,7 @@ class ds389 (
   Pattern['^[\S]+$']           $root_dn                      = 'cn=Directory_Manager',
   Simplib::IP                  $listen_address               = '0.0.0.0',
   Simplib::Port                $port                         = 389,
-  Boolean                      $enable_admin_service         = false,
-  String[2]                    $admin_user                   = 'admin',
-  Optional[Pattern['^[\S]+$']] $admin_password               = undef,
-  Simplib::IP                  $admin_service_listen_address = '0.0.0.0',
-  Simplib::Port                $admin_service_port           = 9830,
+  Optional[Pattern['^[\S]+$']] $root_dn_password             = undef,
   String[1]                    $service_user                 = 'dirsrv',
   String[1]                    $service_group                = 'dirsrv',
   Hash                         $instances                    = {},
@@ -70,25 +54,11 @@ class ds389 (
   include ds389::install
 
   if $initialize_ds_root {
-
-    if $enable_admin_service {
-      $_admin_params = {
-        'enable_admin_service'         => $enable_admin_service,
-        'admin_user'                   => $admin_user,
-        'admin_password'               => $admin_password,
-        'admin_service_listen_address' => $admin_service_listen_address,
-        'admin_service_port'           => $admin_service_port,
-      }
-    }
-    else {
-      $_admin_params = {}
-    }
-
     $_default_instance_params = {
       port          => $port,
       service_user  => $service_user,
-      service_group => $service_group,
-    }.merge($_admin_params)
+      service_group => $service_group
+    }
 
     class { 'ds389::instance::default':
       base_dn                 => $base_dn,

@@ -65,25 +65,19 @@ describe 'ds389::instance', type: :define do
             inifile = IniFile.new
             inifile = inifile.parse(content).to_h
 
-            expect(inifile.keys.sort).to eq(['General', 'slapd', 'admin'].sort)
+            expect(inifile.keys.sort).to eq(['General', 'slapd'].sort)
             expect(inifile['General'].keys.sort).to eq(
               [
                 'SuiteSpotUserID',
                 'SuiteSpotGroup',
-                'AdminDomain',
                 'FullMachineName',
                 'ConfigDirectoryLdapURL',
-                'ConfigDirectoryAdminID',
-                'ConfigDirectoryAdminPwd',
               ].sort,
             )
             expect(inifile['General']['SuiteSpotUserID']).to eq('dirsrv')
             expect(inifile['General']['SuiteSpotGroup']).to eq('dirsrv')
-            expect(inifile['General']['AdminDomain']).to eq(facts[:domain])
             expect(inifile['General']['FullMachineName']).to eq(facts[:fqdn])
             expect(inifile['General']['ConfigDirectoryLdapURL']).to eq("ldap://#{facts[:fqdn]}:389/o=NetscapeRoot")
-            expect(inifile['General']['ConfigDirectoryAdminID']).to eq('admin')
-            expect(inifile['General']['ConfigDirectoryAdminPwd']).to match(%r{^.+{8,}})
 
             expect(inifile['slapd'].keys.sort).to eq(
               [
@@ -105,20 +99,6 @@ describe 'ds389::instance', type: :define do
             expect(inifile['slapd']['SlapdConfigForMC']).to eq('yes')
             expect(inifile['slapd']['AddOrgEntries']).to eq('yes')
             expect(inifile['slapd']['AddSampleEntries']).to eq('no')
-
-            expect(inifile['admin'].keys.sort).to eq(
-              [
-                'Port',
-                'ServerAdminID',
-                'ServerAdminPwd',
-                'ServerIpAddress',
-              ].sort,
-            )
-
-            expect(inifile['admin']['Port']).to eq(9830)
-            expect(inifile['admin']['ServerAdminID']).to eq('admin')
-            expect(inifile['admin']['ServerAdminPwd']).to match(%r{^.+{8,}})
-            expect(inifile['admin']['ServerIpAddress']).to eq('127.0.0.1')
           }
 
           it {

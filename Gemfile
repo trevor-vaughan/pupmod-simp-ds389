@@ -29,9 +29,7 @@ group :development do
 end
 
 group :system_tests do
-  #gem 'beaker'
-  # Docker fixes
-  gem 'beaker', :git => 'https://github.com/voxpupuli/beaker', :ref => 'e0685f9b2fb092e3a522e5a623cdc90774096bee'
+  gem 'beaker'
   gem 'beaker-rspec'
   gem 'simp-beaker-helpers', ENV['SIMP_BEAKER_HELPERS_VERSION'] || ['>= 1.21.4', '< 2']
 end
