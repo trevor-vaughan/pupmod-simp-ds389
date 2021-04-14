@@ -164,12 +164,9 @@ define ds389::instance (
       )
     }
 
-    ds389::instance::selinux::port { $port:
-      $default => 389,
-      before    => [
-        Ds389::Instance::Service[$title],
-        Exec["Setup ${title} DS"]
-      ]
+    ds389::instance::selinux::port { "${port}":
+      default => 389,
+      before  => Ds389::Instance::Service[$title]
     }
 
     $_ds_config_file = "${ds389::config_dir}/${$_safe_path}_ds_setup.inf"
@@ -268,11 +265,11 @@ define ds389::instance (
       onlyif  => "/bin/test -d /etc/dirsrv/slapd-${title}"
     }
 
-    ds389::instance::selinux::port { $port:
+    ds389::instance::selinux::port { "${port}":
       enable  => false,
       default => 389
     }
-    ds389::instance::selinux::port { $secure_port:
+    ds389::instance::selinux::port { "${secure_port}":
       enable  => false,
       default => 636
     }

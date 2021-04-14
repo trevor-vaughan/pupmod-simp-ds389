@@ -57,7 +57,7 @@ define ds389::instance::tls (
       value         => '0'
     }
 
-    ds389::instance::selinux::port { $port:
+    ds389::instance::selinux::port { "${port}":
       enable  => false,
       default => 636
     }
@@ -76,27 +76,9 @@ define ds389::instance::tls (
       fail("The port '${port}' is already selected for use by another defined catalog resource")
     }
 
-    if ($port != 636) and $facts['selinux_enforced'] {
-      if simplib::module_exist('simp/selinux') {
-        simplib::assert_optional_dependency($module_name, 'simp/selinux')
-        simplib::assert_optional_dependency($module_name, 'simp/vox_selinux')
-
-        include selinux::install
-      }
-      else {
-        simplib::assert_optional_dependency($module_name, 'puppet/selinux')
-      }
-
-      selinux_port { "tcp_${port}-${port}":
-        low_port  => $port,
-        high_port => $port,
-        seltype   => 'ldap_port_t',
-        protocol  => 'tcp',
-        before    => [
-          Ds389::Instance::Service[$title],
-          Exec["Setup ${title} DS"]
-        ]
-      }
+    ds389::instance::selinux::port { "${port}":
+      default => 636,
+      before  => Ds389::Instance::Service[$title]
     }
 
     $_pin_file = "/etc/dirsrv/slapd-${_instance_name}/pin.txt"
