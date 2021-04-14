@@ -14,7 +14,7 @@
 #     * You can get a list of all configuration keys by running:
 #       ``ldapsearch -H ldap://localhost:389 \
 #       -y /usr/share/puppet_ds389_config/<instance_name>_ds_pw.txt \
-#       -D "cn=SIMP Directory Manager" -s base -b "cn=config"``
+#       -D "cn=Directory_Manager" -s base -b "cn=config"``
 #
 # @param value
 #   The value that should be set for `$key`
@@ -55,10 +55,10 @@ define ds389::instance::attr::set (
   Simplib::Systemd::ServiceName  $instance_name,
   Optional[String[1]]            $key              = undef,
   Optional[String[1]]            $value            = undef,
-  Ds389::ConfigItems             $attrs     = {},
+  Ds389::ConfigItems             $attrs            = {},
   String[2]                      $base_dn          = 'cn=config',
-  Optional[String[2]]            $root_dn         = undef,
-  Optional[Stdlib::Absolutepath] $root_pw_file    = undef,
+  Optional[String[2]]            $root_dn          = undef,
+  Optional[Stdlib::Absolutepath] $root_pw_file     = undef,
   Optional[Simplib::Host]        $host             = undef,
   Optional[Simplib::Port]        $port             = undef,
   Boolean                        $force_ldapi      = false,

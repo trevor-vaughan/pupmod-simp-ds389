@@ -4,9 +4,6 @@
 # will need to pass in all parameters since the fact will not yet be fully
 # populated.
 #
-# This works by comparing a generated LDIF with the LDIF formatted contents of
-# the target instance.
-#
 # If passing a full LDIF - DO NOT WRAP LINES
 #
 # @option name [String]

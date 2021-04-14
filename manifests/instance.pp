@@ -45,22 +45,22 @@
 # @author https://github.com/simp/pupmod-simp-ds389/graphs/contributors
 #
 define ds389::instance (
-  Enum['present','absent']     $ensure                       = 'present',
-  Optional[String[2]]          $base_dn                      = undef,
-  Optional[Pattern['^[\S]+$']] $root_dn                      = undef,
-  Simplib::IP                  $listen_address               = '127.0.0.1',
-  Simplib::Port                $port                         = 389,
-  Simplib::Port                $secure_port                  = 636,
-  Optional[Pattern['^[\S]+$']] $root_dn_password               = undef,
-  String[1]                    $machine_name                 = $facts['fqdn'],
-  String[1]                    $service_user                 = 'dirsrv',
-  String[1]                    $service_group                = 'dirsrv',
-  Optional[String[1]]          $bootstrap_ldif_content       = undef,
-  Optional[String[1]]          $ds_setup_ini_content         = undef,
-  Ds389::ConfigItem            $general_config               = simplib::dlookup('ds389::instance', 'general_config', {'default_value' => {} }),
-  Boolean                      $enable_tls                   = simplib::lookup('simp_options::pki', { 'default_value' => false }),
-  Hash                         $tls_params                   = simplib::dlookup('ds389::instance', 'tls_params', { 'default_value' => {} }),
-  Simplib::PackageEnsure       $package_ensure               = simplib::lookup('simp_options::package_ensure', { 'default_value' => 'installed' })
+  Enum['present','absent']       $ensure                 = 'present',
+  Optional[String[2]]            $base_dn                = undef,
+  Optional[Pattern['^[\S]+$']]   $root_dn                = undef,
+  Simplib::IP                    $listen_address         = '127.0.0.1',
+  Simplib::Port                  $port                   = 389,
+  Simplib::Port                  $secure_port            = 636,
+  Optional[Pattern['^[\S]+$']]   $root_dn_password       = undef,
+  String[1]                      $machine_name           = $facts['fqdn'],
+  String[1]                      $service_user           = 'dirsrv',
+  String[1]                      $service_group          = 'dirsrv',
+  Optional[String[1]]            $bootstrap_ldif_content = undef,
+  Optional[String[1]]            $ds_setup_ini_content   = undef,
+  Ds389::ConfigItem              $general_config         = simplib::dlookup('ds389::instance', 'general_config', {'default_value' => {} }),
+  Variant[Boolean, Enum['simp']] $enable_tls             = simplib::lookup('simp_options::pki', { 'default_value' => false }),
+  Hash                           $tls_params             = simplib::dlookup('ds389::instance', 'tls_params', { 'default_value' => {} }),
+  Simplib::PackageEnsure         $package_ensure         = simplib::lookup('simp_options::package_ensure', { 'default_value' => 'installed' })
 ) {
   simplib::assert_metadata($module_name)
 

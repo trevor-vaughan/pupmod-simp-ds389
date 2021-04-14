@@ -19,8 +19,6 @@ define ds389::instance::tls (
 ) {
   assert_private()
 
-  $_instance_name = split($title, /^(dirsrv@)?slapd-/)[-1]
-
   $_default_dse_config = {
     'cn=encryption,cn=config' => {
       'allowWeakCipher'               => 'off',
@@ -48,8 +46,8 @@ define ds389::instance::tls (
   }
 
   if $ensure == 'disabled' {
-    ds389::instance::attr::set { "Do not require encryption for ${_instance_name}":
-      instance_name => $_instance_name,
+    ds389::instance::attr::set { "Do not require encryption for ${title}":
+      instance_name => $title,
       root_dn       => $root_dn,
       root_pw_file  => $root_pw_file,
       force_ldapi   => true,
@@ -81,8 +79,10 @@ define ds389::instance::tls (
       default  => 636
     }
 
-    $_pin_file = "/etc/dirsrv/slapd-${_instance_name}/pin.txt"
-    $_token_file = "/etc/dirsrv/slapd-${_instance_name}/p12token.txt"
+    # Needed to allow unattended starts
+    # See the 389-DS docs for additional details.
+    $_pin_file = "/etc/dirsrv/slapd-${title}/pin.txt"
+    $_token_file = "/etc/dirsrv/slapd-${title}/p12token.txt"
 
     file { $_pin_file:
       group   => $service_group,
@@ -102,43 +102,43 @@ define ds389::instance::tls (
         source => $source,
         pki    => $ensure,
         group  => 'root',
-        notify => Exec["Build ${_instance_name} p12"]
+        notify => Exec["Build ${title} p12"]
       }
     }
 
-    $_instance_base = "/etc/dirsrv/slapd-${_instance_name}"
+    $_instance_base = "/etc/dirsrv/slapd-${title}"
     $_p12_file = "${_instance_base}/puppet_import.p12"
 
-    exec { "Validate ${_instance_name} p12":
+    exec { "Validate ${title} p12":
       command => "rm -f ${_p12_file}",
       unless  => "openssl pkcs12 -nokeys -in ${_p12_file} -passin file:${_token_file}",
       path    => ['/bin', '/usr/bin'],
-      notify  => Exec["Build ${_instance_name} p12"]
+      notify  => Exec["Build ${title} p12"]
     }
 
-    exec { "Build ${_instance_name} p12":
+    exec { "Build ${title} p12":
       command     => "openssl pkcs12 -export -name 'Server-Cert' -out ${_p12_file} -in ${key} -certfile ${cert} -passout file:${_token_file}",
       refreshonly => true,
       path        => ['/bin', '/usr/bin'],
       subscribe   => File[$_token_file]
     }
 
-    exec { "Import ${_instance_name} p12":
+    exec { "Import ${title} p12":
       command   => "certutil -D -d ${_instance_base} -n 'Server-Cert' ||:; pk12util -i ${_p12_file} -d ${_instance_base} -w ${_token_file} -k ${_token_file} -n 'Server-Cert'",
       unless    => "certutil -d ${_instance_base} -L -n 'Server-Cert'",
       path      => ['/bin', '/usr/bin'],
-      subscribe => Exec["Build ${_instance_name} p12"]
+      subscribe => Exec["Build ${title} p12"]
     }
 
-    exec { "Import ${_instance_name} CA":
+    exec { "Import ${title} CA":
       command   => "certutil -D -d ${_instance_base} -n 'CA Certificate' ||:; certutil -A -i ${cafile} -d ${_instance_base} -n 'CA Certificate' -t 'CT,,' -a -f ${_token_file}",
       unless    => "certutil -d ${_instance_base} -L -n 'CA Certificate'",
       path      => ['/bin', '/usr/bin'],
-      subscribe => Exec["Build ${_instance_name} p12"]
+      subscribe => Exec["Build ${title} p12"]
     }
 
-    ds389::instance::dn::add { "RSA DN for ${_instance_name}":
-      instance_name => $_instance_name,
+    ds389::instance::dn::add { "RSA DN for ${title}":
+      instance_name => $title,
       dn            => 'cn=RSA,cn=encryption,cn=config',
       objectclass   => [
         'top',
@@ -154,14 +154,14 @@ define ds389::instance::tls (
       force_ldapi   => true
     }
 
-    ds389::instance::attr::set { "Configure PKI for ${_instance_name}":
-      instance_name    => $_instance_name,
+    ds389::instance::attr::set { "Configure PKI for ${title}":
+      instance_name    => $title,
       root_dn          => $root_dn,
       root_pw_file     => $root_pw_file,
       attrs            => $_default_dse_config.deep_merge($dse_config).deep_merge($_required_dse_config),
       force_ldapi      => true,
       restart_instance => true,
-      require          => Ds389::Instance::Dn::Add["RSA DN for ${_instance_name}"]
+      require          => Ds389::Instance::Dn::Add["RSA DN for ${title}"]
     }
   }
 }

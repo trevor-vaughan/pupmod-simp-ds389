@@ -21,18 +21,18 @@
 # @author https://github.com/simp/pupmod-simp-ds389/graphs/contributors
 #
 class ds389::instance::default (
-  String[2]    $base_dn                 = simplib::lookup('simp_options::ldap::base_dn', { 'default_value' => sprintf(simplib::ldap::domain_to_dn($facts['domain'], true)) }),
-  String[2]    $root_dn                 = 'cn=Directory_Manager',
-  String[1]    $instance_name           = 'puppet_default',
-  Boolean      $bootstrap_with_defaults = true,
-  Simplib::IP  $listen_address          = '0.0.0.0',
-  Boolean      $enable_tls              = simplib::lookup('simp_options::pki', { 'default_value' => false }),
-  Hash         $tls_params              = {},
-  Hash         $instance_params         = {},
+  String[2]                      $base_dn                 = simplib::lookup('simp_options::ldap::base_dn', { 'default_value' => sprintf(simplib::ldap::domain_to_dn($facts['domain'], true)) }),
+  String[2]                      $root_dn                 = 'cn=Directory_Manager',
+  String[1]                      $instance_name           = 'puppet_default',
+  Boolean                        $bootstrap_with_defaults = true,
+  Simplib::IP                    $listen_address          = '0.0.0.0',
+  Variant[Boolean, Enum['simp']] $enable_tls              = simplib::lookup('simp_options::pki', { 'default_value' => false }),
+  Hash                           $tls_params              = {},
+  Hash                           $instance_params         = {},
 
   # Default LDIF configuration parameters
-  Integer[1]   $users_group_id          = 100,
-  Integer[500] $administrators_group_id = 700
+  Integer[1]   $users_group_id                            = 100,
+  Integer[500] $administrators_group_id                   = 700
 ) {
   assert_private()
 
