@@ -103,8 +103,8 @@ describe 'ds389::instance', type: :define do
 
           it {
             expect(subject).to create_exec("Setup #{title} DS")
-              .with_command("/sbin/setup-ds.pl --silent -f /usr/share/puppet_ds389_config/#{title}_ds_setup.inf")
-              .with_creates("/etc/dirsrv/slapd-#{title}/dse.ldif")
+              .with_command("/sbin/setup-ds.pl --silent -f /usr/share/puppet_ds389_config/#{title}_ds_setup.inf && touch '/etc/dirsrv/slapd-#{title}/.puppet_bootstrapped'")
+              .with_creates("/etc/dirsrv/slapd-#{title}/.puppet_bootstrapped")
               .that_requires("File[/usr/share/puppet_ds389_config/#{title}_ds_setup.inf]")
               .that_notifies("Service[dirsrv@#{title}]")
           }
@@ -148,6 +148,7 @@ describe 'ds389::instance', type: :define do
                 {
                   'cn=config' => {
                     'nsslapd-ldapilisten' => 'on',
+                    'nsslapd-ldapiautobind' => 'on',
                     'nsslapd-localssf' => 99_999
                   }
                 },
@@ -193,7 +194,16 @@ describe 'ds389::instance', type: :define do
                 .with_cert("/etc/pki/simp_apps/ds389_test/x509/public/#{facts[:fqdn]}.pub")
                 .with_key("/etc/pki/simp_apps/ds389_test/x509/private/#{facts[:fqdn]}.pem")
                 .with_cafile('/etc/pki/simp_apps/ds389_test/x509/cacerts/cacerts.pem')
-                .with_dse_config({})
+                .with_dse_config(
+                  {
+                    'cn=config' => {
+                      'nsslapd-require-secure-binds' => 'on'
+                    },
+                    'cn=encryption,cn=config' => {
+                      'nsSSL3Ciphers' => %r{AES_256}
+                    }
+                  },
+                )
                 .with_token(%r{^\S{32}$})
                 .with_service_group('dirsrv')
             }

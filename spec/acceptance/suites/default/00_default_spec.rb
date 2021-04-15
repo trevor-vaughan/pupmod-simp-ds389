@@ -43,8 +43,9 @@ describe 'Set up 389DS' do
     context 'when creating the default instance' do
       let(:hieradata) do
         {
-          'ds389::initialize_ds_root' => true,
-          'ds389::bootstrap_ds_root_defaults' => true
+          'ds389::initialize_ds_root'            => true,
+          'ds389::bootstrap_ds_root_defaults'    => true,
+          'ds389::instance::default::enable_tls' => false
         }
       end
 
@@ -95,8 +96,9 @@ describe 'Set up 389DS' do
       let(:ds_root_name) { 'scrap' }
       let(:hieradata) do
         {
-          'ds389::initialize_ds_root' => true,
-          'ds389::instances' => {
+          'ds389::initialize_ds_root'            => true,
+          'ds389::instance::default::enable_tls' => false,
+          'ds389::instances'                     => {
             ds_root_name => {
               'base_dn' => 'dc=scrap test,dc=space',
               'root_dn' => 'cn=Scrap_Admin',
@@ -125,7 +127,10 @@ describe 'Set up 389DS' do
 
     context 'when removing a server instance' do
       let(:manifest) do
-        'ds389::instance { "scrap": ensure => "absent" }'
+        <<~MANIFEST
+          ds389::instance { "puppet_default": ensure => "absent" }
+          ds389::instance { "scrap": ensure => "absent" }
+          MANIFEST
       end
       let(:hieradata) do
         { 'ds389::initialize_ds_root' => true }
@@ -137,10 +142,12 @@ describe 'Set up 389DS' do
 
       it 'removes the server instance' do
         expect(directory_exists_on(host, '/etc/dirsrv/slapd-scrap')).to be true
+        expect(directory_exists_on(host, '/etc/dirsrv/slapd-puppet_default')).to be true
 
         apply_manifest_on(host, manifest, catch_failures: true)
 
         expect(directory_exists_on(host, '/etc/dirsrv/slapd-scrap')).to be false
+        expect(directory_exists_on(host, '/etc/dirsrv/slapd-puppet_default')).to be false
       end
 
       it 'is idempotent' do

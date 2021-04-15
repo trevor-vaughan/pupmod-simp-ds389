@@ -22,6 +22,10 @@ describe '389DS with PKI' do
     context 'when enabling PKI in the default instance' do
       let(:hieradata) do
         {
+          'simp_options::ldap::bind_dn' => 'cn=hostAuth,ou=Hosts,dc=test,dc=case',
+          'simp_options::ldap::base_dn' => 'dc=test,dc=case',
+          'simp_options::ldap::bind_pw' => 'asouighoahgh3whg8arewhghaesdhgeahgoha',
+          'simp_options::ldap::bind_hash' => '{SSHA}24M0TnXrhTsYzaaR+T4kDCKhu7dnVNBCG0qPMQ==',
           'ds389::initialize_ds_root' => true,
           'ds389::bootstrap_ds_root_defaults' => true,
           'ds389::instance::default::enable_tls' => true,
@@ -48,7 +52,6 @@ describe '389DS with PKI' do
         host.add_env_var('LDAPTLS_CACERT', '/etc/pki/simp_apps/ds389_puppet_default/x509/cacerts/cacerts.pem')
         host.add_env_var('LDAPTLS_KEY', "/etc/pki/simp_apps/ds389_puppet_default/x509/private/#{fqdn}.pem")
         host.add_env_var('LDAPTLS_CERT', "/etc/pki/simp_apps/ds389_puppet_default/x509/public/#{fqdn}.pub")
-        host.add_env_var('LDAPTLS_CIPHER_SUITE', 'AES256-SHA256')
       end
 
       it 'can login to 389DS using STARTTLS' do
@@ -67,7 +70,6 @@ describe '389DS with PKI' do
         host.clear_env_var('LDAPTLS_CERT')
         host.clear_env_var('LDAPTLS_KEY')
         host.clear_env_var('LDAPTLS_CACERT')
-        host.clear_env_var('LDAPTLS_CIPHER_SUITE')
       end
     end
   end

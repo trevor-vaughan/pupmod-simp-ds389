@@ -21,6 +21,21 @@ RSpec.configure do |c|
   # ensure that environment OS is ready on each host
   fix_errata_on hosts
 
+  begin
+    server = only_host_with_role(hosts, 'server')
+  rescue ArgumentError => e
+    server = only_host_with_role(hosts, 'default')
+  end
+
+  # Generate and install PKI certificates on each SUT
+  Dir.mktmpdir do |cert_dir|
+    run_fake_pki_ca_on(server, hosts, cert_dir)
+    hosts.each { |sut| copy_pki_to(sut, cert_dir, '/etc/pki/simp-testing') }
+  end
+
+  # add PKI keys
+  copy_keydist_to(server)
+
   # Readable test descriptions
   c.formatter = :documentation
 
@@ -29,20 +44,6 @@ RSpec.configure do |c|
     begin
       # Install modules and dependencies from spec/fixtures/modules
       copy_fixture_modules_to(hosts)
-      begin
-        server = only_host_with_role(hosts, 'server')
-      rescue ArgumentError => e
-        server = only_host_with_role(hosts, 'default')
-      end
-
-      # Generate and install PKI certificates on each SUT
-      Dir.mktmpdir do |cert_dir|
-        run_fake_pki_ca_on(server, hosts, cert_dir)
-        hosts.each { |sut| copy_pki_to(sut, cert_dir, '/etc/pki/simp-testing') }
-      end
-
-      # add PKI keys
-      copy_keydist_to(server)
     rescue StandardError, ScriptError => e
       raise e unless ENV['PRY']
 

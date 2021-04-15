@@ -1,71 +1,72 @@
 <%- |
   String[2]  $base_dn,
+  String[2]  $root_dn,
+  String[2]  $bind_dn,
+  String[2]  $bind_pw,
   Integer[0] $users_group_id,
   Integer[0] $administrators_group_id
 | -%>
-# Create the top-level database
-dn: cn="<%= $base_dn %>",cn=mapping tree,cn=config
-cn: <%= $base_dn %>
-objectClass: top
-objectClass: extensibleObject
-objectClass: nsMappingTree
-nsslapd-state: backend
-nsslapd-backend: UserData
-
 dn: <%= $base_dn %>
 dc: <%= split(split($base_dn, ',')[0], /(?i:dc=)/)[-1] %>
 objectClass: top
 objectClass: domain
+aci: (targetattr = "aci")(version 3.0;acl "Admins can manage ACIs"; allow (write) groupdn="ldap:///cn=Directory Administrators,ou=Group,<%= $base_dn %>";)
+aci: (target=ldap:///<%= $base_dn %>)(targetattr=*)(version 3.0; acl "Directory Administrators"; allow(write) groupdn = "ldap:///cn=Directory Administrators,ou=Group,<%= $base_dn %>";)
+
+dn: cn=Directory Administrators,<%= $base_dn %>
+cn: Directory Administrators
+objectClass: top
+objectClass: groupOfUniqueNames
+uniqueMember: <%= $root_dn %>
 
 dn: ou=Hosts,<%= $base_dn %>
 ou: Hosts
 objectClass: top
 objectClass: organizationalUnit
 
-dn: ou=Rpc,<%= $base_dn %>
-ou: Rpc
+# Custom Host-Account Password Policy Container
+dn: cn=nsPwPolicyContainer,ou=Hosts,<%= $base_dn %>
+cn: nsPwPolicyContainer
 objectClass: top
-objectClass: organizationalUnit
+objectClass: nsContainer
 
-dn: ou=Services,<%= $base_dn %>
-ou: Services
+# Custom password policies for automated accounts
+dn: cn="cn=noExpire_noLockout,ou=Hosts,<%= $base_dn %>",cn=nsPwPolicyContainer,ou=Hosts,<%= $base_dn %>
 objectClass: top
-objectClass: organizationalUnit
+objectClass: extensibleObject
+objectClass: ldapSubentry
+objectClass: passwordPolicy
+passwordChange: off
+passwordMustChange: off
+passwordHistory: off
+passwordLockout: off
+passwordCheckSyntax: off
 
-dn: ou=Mounts,<%= $base_dn %>
-ou: Mounts
+dn: cn="cn=nsPwTemplateEntry,ou=Hosts,<%= $base_dn %>",cn=nsPwPolicyContainer,ou=Hosts,<%= $base_dn %>
 objectClass: top
-objectClass: organizationalUnit
+objectClass: extensibleObject
+objectClass: cosTemplate
+objectClass: ldapSubentry
+cosPriority: 1
+pwdPolicySubentry: cn="cn=noExpire_noLockout,ou=Hosts,<%= $base_dn %>",cn=nsPwPolicyContainer,ou=Hosts,<%= $base_dn %>
 
-dn: ou=Networks,<%= $base_dn %>
-ou: Networks
+dn: cn=noExpire_noLockout_cos,ou=Hosts,<%= $base_dn %>
 objectClass: top
-objectClass: organizationalUnit
+objectClass: LDAPsubentry
+objectClass: cosSuperDefinition
+objectClass: cosPointerDefinition
+cosTemplateDn: cn="cn=nsPwTemplateEntry,ou=Hosts,<%= $base_dn %>",cn=nsPwPolicyContainer,ou=Hosts,<%= $base_dn %>
+cosAttribute: pwdPolicySubentry default operational
 
-dn: ou=People,<%= $base_dn %>
-ou: People
+dn: <%= $bind_dn %>
+cn: <%= split(split($bind_dn, ',')[0], '=')[-1] %>
 objectClass: top
-objectClass: organizationalUnit
-
-dn: ou=Group,<%= $base_dn %>
-ou: Group
-objectClass: top
-objectClass: organizationalUnit
-
-dn: ou=Netgroup,<%= $base_dn %>
-ou: Netgroup
-objectClass: top
-objectClass: organizationalUnit
-
-dn: ou=Protocols,<%= $base_dn %>
-ou: Protocols
-objectClass: top
-objectClass: organizationalUnit
-
-dn: ou=Aliases,<%= $base_dn %>
-ou: Aliases
-objectClass: top
-objectClass: organizationalUnit
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: inetUser
+sn: Internal
+userPassword: <%= $bind_pw %>
 
 dn: cn=localhost.localdomain,ou=Hosts,<%= $base_dn %>
 objectClass: top
@@ -73,6 +74,21 @@ objectClass: ipHost
 ipHostNumber: 127.0.0.1
 cn: localhost.localdomain
 cn: localhost
+
+dn: ou=Group,<%= $base_dn %>
+ou: Group
+objectClass: top
+objectClass: organizationalUnit
+aci: (targetattr!="userpassword || aci")(version 3.0; acl "Enable Authenticated Group Read Access"; allow (read, search, compare) userdn="ldap:///all";)
+
+dn: ou=People,<%= $base_dn %>
+ou: People
+objectClass: top
+objectClass: organizationalUnit
+aci: (targetattr!="userpassword || aci")(version 3.0; acl "Enable Authenticated People Read Access"; allow (read, search, compare) userdn="ldap:///all";)
+aci: (targetattr = "givenname || sn || cn || displayname || title || initials || loginshell || gecos || homephone || mobile || pager || facsimiletelephonenumber || telephonenumber || street || roomnumber || l || st || postalcode || manager || secretary || description || carlicense || labeleduri || inetuserhttpurl || seealso || employeetype  || businesscategory || ou")(version 3.0;acl "selfservice:User Self service";allow (write) userdn = "ldap:///self";)
+aci: (targetattr = "userpassword")(version 3.0; acl "selfservice:Self can write own password"; allow (write) userdn="ldap:///self";)
+aci: (targetattr = "usercertificate")(version 3.0;acl "selfservice:Users can manage their own X.509 certificates";allow (write) userdn = "ldap:///self";)
 
 dn: cn=users,ou=Group,<%= $base_dn %>
 objectClass: groupOfUniqueNames
@@ -87,3 +103,25 @@ objectClass: posixGroup
 objectClass: top
 cn: administrators
 gidNumber: <%= $administrators_group_id %>
+
+dn: ou=SUDOers,<%= $base_dn %>
+ou: People
+objectClass: top
+objectClass: organizationalUnit
+aci: (targetattr!="userpassword || aci")(version 3.0; acl "Enable Host Bind User Read Access"; allow (read, search, compare) userdn="ldap:///<%= $bind_dn %>";)
+
+dn: cn=defaults,ou=SUDOers,<%= $base_dn %>
+cn: defaults
+objectClass: top
+objectClass: sudoRole
+description: Default sudo options
+sudoOrder: 1
+sudoOption: ignore_unknown_defaults
+sudoOption: env_reset
+sudoOption: ignore_dot
+sudoOption: ignore_local_sudoers
+sudoOption: requiretty
+sudoOption: !root_sudo
+sudoOption: use_pty
+sudoOption: lecture=once
+sudoOption: listpw=all

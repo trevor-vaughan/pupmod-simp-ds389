@@ -21,9 +21,11 @@
 # @author https://github.com/simp/pupmod-simp-ds389/graphs/contributors
 #
 class ds389::instance::default (
+  String[1]                      $instance_name           = 'puppet_default',
   String[2]                      $base_dn                 = simplib::lookup('simp_options::ldap::base_dn', { 'default_value' => sprintf(simplib::ldap::domain_to_dn($facts['domain'], true)) }),
   String[2]                      $root_dn                 = 'cn=Directory_Manager',
-  String[1]                      $instance_name           = 'puppet_default',
+  String[2]                      $bind_dn                 = simplib::lookup('simp_options::ldap::bind_dn', { 'default_value' => "cn=hostAuth,ou=Hosts,${base_dn}" }),
+  String[1]                      $bind_pw                 = simplib::lookup('simp_options::ldap::bind_hash', { 'default_value' => simplib::passgen("ds389_${instance_name}_bindpw", {'length' => 64})}),
   Boolean                        $bootstrap_with_defaults = true,
   Simplib::IP                    $listen_address          = '0.0.0.0',
   Variant[Boolean, Enum['simp']] $enable_tls              = simplib::lookup('simp_options::pki', { 'default_value' => false }),
@@ -51,11 +53,17 @@ class ds389::instance::default (
       'bootstrap_ldif_content' => epp("${module_name}/instance/bootstrap.ldif.epp",
         {
           base_dn                 => $base_dn,
+          root_dn                 => $root_dn,
+          bind_dn                 => $bind_dn,
+          bind_pw                 => $bind_pw,
           users_group_id          => $users_group_id,
           administrators_group_id => $administrators_group_id
         }
       )
     }
+  }
+  else {
+    $_default_params = {}
   }
 
   ds389::instance { $instance_name:

@@ -21,26 +21,6 @@ HOSTS:
         gpgkeys:
           - https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-$releasever
 
-# el7-client:
-#   platform:   el-7-x86_64
-#   box:        centos/7
-#   hypervisor: <%= hypervisor %>
-#   yum_repos:
-#     epel:
-#       mirrorlist: 'https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=$basearch'
-#       gpgkeys:
-#         - https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-$releasever
-
-# el6-client:
-#   platform:   el-6-x86_64
-#   box:        centos/6
-#   hypervisor: <%= hypervisor %>
-#   yum_repos:
-#     epel:
-#       mirrorlist: 'https://mirrors.fedoraproject.org/metalink?repo=epel-6&arch=$basearch'
-#       gpgkeys:
-#         - https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-$releasever
-
 CONFIG:
   log_level: verbose
   type: aio

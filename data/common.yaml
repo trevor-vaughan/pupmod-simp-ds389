@@ -12,27 +12,82 @@ lookup_options:
     merge:
       strategy: deep
       knockout_prefix: --
+  ds389::instance::general_config:
+    merge:
+      strategy: deep
+      knockout_prefix: --
+  ds389::instance::password_policy:
+    merge:
+      strategy: deep
+      knockout_prefix: --
 
 ds389::config::attributes_requiring_restart:
-  - nsslapd-changelogdir
-  - nsslapd-changelogmaxage
-  - nsslapd-changelogmaxentries
-  - nsslapd-changelogsuffix
+  - nsslapd-changelogDir
+  - nsslapd-changelogMaxAge
+  - nsslapd-changelogMaxEntries
+  - nsslapd-changelogSuffix
   - nsslapd-db-locks
-  - nsslapd-ldapifilepath
-  - nsslapd-ldapilisten
-  - nsslapd-listenhost
-  - nsslapd-maxdescriptors
+  - nsslapd-ldapiFilePath
+  - nsslapd-ldapiListen
+  - nsslapd-listenHost
+  - nsslapd-maxDescriptors
   - nsslapd-plugin
   - nsslapd-port
   - nsslapd-return-exact-case
   - nsslapd-schema-ignore-trailing-spaces
-  - nsslapd-securelistenhost
-  - nsslapd-secureport
-  - nsslapd-sslclientauth
-  - nsslapd-workingdir
+  - nsslapd-secureListenhost
+  - nsslapd-securePort
+  - nsslapd-sslClientAuth
+  - nsslapd-workingDir
 
 ds389::instance::general_config:
   nsslapd-dynamic-plugins: 'on'
   nsslapd-allow-unauthenticated-binds: 'off'
   nsslapd-nagle: 'off'
+
+ds389::instance::tls::dse_config:
+  'cn=config':
+    nsslapd-require-secure-binds: 'on'
+  'cn=encryption,cn=config':
+    nsSSL3Ciphers: >-
+      +TLS_AES_256_GCM_SHA384,
+      +TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+      +TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+      +TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384,
+      +TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384,
+      +TLS_DHE_RSA_WITH_AES_256_GCM_SHA384,
+      +TLS_DHE_DSS_WITH_AES_256_GCM_SHA384,
+      +TLS_DHE_RSA_WITH_AES_256_CBC_SHA256,
+      +TLS_DHE_DSS_WITH_AES_256_CBC_SHA256,
+      +TLS_RSA_WITH_AES_256_GCM_SHA384,
+      +TLS_RSA_WITH_AES_256_CBC_SHA256
+
+ds389::instance::password_policy:
+  nsslapd-pwpolicy-local: 'on'
+  passwordchange: 'on'
+  passwordMustChange: 'on'
+  passwordHistory: 'on'
+  passwordInHistory: 6
+  passwordTrackUpdateTime: 'on'
+  passwordWarning: 86400
+  passwordIsGlobalPolicy: 'on'
+  passwordExp: 'on'
+  passwordMaxAge: 7776000
+  passwordMinAge: 1800
+  passwordGraceLimit: 0
+  passwordLockout: 'on'
+  passwordUnlock: 'on'
+  passwordLockoutDuration: 900
+  passwordMaxFailure: 3
+  passwordResetFailureCount: 600
+  passwordCheckSyntax: 'on'
+  passwordMinLength: 15
+  passwordMinDigits: 1
+  passwordMinAlphas: 1
+  passwordMinUppers: 1
+  passwordMinLowers: 1
+  passwordMinSpecials: 1
+  passwordMaxRepeats: 3
+  passwordMinCategories: 3
+  passwordMinTokenLength: 3
+  nsslapd-pwpolicy-inherit-global: 'on'
