@@ -10,7 +10,7 @@ describe 'ds389' do
       context "with #{os}" do
         it { is_expected.to compile.with_all_deps }
         it { is_expected.to create_class('ds389::install') }
-        it { is_expected.not_to create_ds389__instance('puppet_default_root') }
+        it { is_expected.not_to create_ds389__instance('puppet_default') }
 
         context 'when creating the default instance' do
           let(:params) do
@@ -20,7 +20,7 @@ describe 'ds389' do
           end
 
           it { is_expected.to compile.with_all_deps }
-          it { is_expected.to create_ds389__instance('puppet_default_root') }
+          it { is_expected.to create_ds389__instance('puppet_default') }
         end
       end
     end

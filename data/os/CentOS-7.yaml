@@ -1,5 +1,0 @@
----
-ds389::install::admin_package_list:
-  - 389-admin
-  - 389-admin-console
-  - 389-ds-console

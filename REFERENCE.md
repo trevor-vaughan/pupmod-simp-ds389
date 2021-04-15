@@ -12,20 +12,44 @@
 
 ### Defined types
 
-* [`ds389::config::item`](#ds389configitem): Modifies the running directory server configuration and restarts the service when necessary.  **IMPORTANT** Do not set sensitive values with 
+* [`ds389::config::item`](#ds389configitem): Modifies the running directory server configuration and restarts the service when necessary.  NOTE: When calling this defined type as you fir
 * [`ds389::instance`](#ds389instance): Set up a local 389DS server
+* [`ds389::instance::service`](#ds389instanceservice): Configure an instance service
+
+### Data types
+
+* [`Ds389::ConfigItem`](#ds389configitem): Valid configuration item
+* [`Ds389::ConfigItems`](#ds389configitems): Valid configuration items Hash
 
 ## Classes
 
-### `ds389`
+### <a name="ds389"></a>`ds389`
 
 Set up a local 389DS server
 
 #### Parameters
 
-The following parameters are available in the `ds389` class.
+The following parameters are available in the `ds389` class:
 
-##### `base_dn`
+* [`base_dn`](#base_dn)
+* [`root_dn`](#root_dn)
+* [`admin_password`](#admin_password)
+* [`listen_address`](#listen_address)
+* [`port`](#port)
+* [`enable_admin_service`](#enable_admin_service)
+* [`admin_user`](#admin_user)
+* [`admin_service_listen_address`](#admin_service_listen_address)
+* [`admin_service_port`](#admin_service_port)
+* [`service_user`](#service_user)
+* [`service_group`](#service_group)
+* [`package_ensure`](#package_ensure)
+* [`config_dir`](#config_dir)
+* [`initialize_ds_root`](#initialize_ds_root)
+* [`bootstrap_ds_root_defaults`](#bootstrap_ds_root_defaults)
+* [`ds_root_name`](#ds_root_name)
+* [`instances`](#instances)
+
+##### <a name="base_dn"></a>`base_dn`
 
 Data type: `String[2]`
 
@@ -33,23 +57,29 @@ The 'base' DN component of the directory server
 
 Default value: `simplib::lookup('simp_options::ldap::base_dn', { 'default_value' => sprintf(simplib::ldap::domain_to_dn($facts['domain'], true)) })`
 
-##### `root_dn`
+##### <a name="root_dn"></a>`root_dn`
 
-Data type: `String[2]`
+Data type: `Pattern['^[\S]+$']`
 
 The default administrator DN for the directory server
 
-Default value: `'cn=Directory Manager'`
+* NOTE: To work around certain application bugs, items with spaces may not
+  be used in this field.
 
-##### `admin_password`
+Default value: `'cn=Directory_Manager'`
 
-Data type: `Optional[String[2]]`
+##### <a name="admin_password"></a>`admin_password`
+
+Data type: `Optional[Pattern['^[\S]+$']]`
 
 The password for the ``$admin_user`` and the ``$root_dn``
 
+* NOTE: To work around certain application bugs, items with spaces may not
+  be used in this field.
+
 Default value: ``undef``
 
-##### `listen_address`
+##### <a name="listen_address"></a>`listen_address`
 
 Data type: `Simplib::IP`
 
@@ -57,7 +87,7 @@ The IP address upon which to listen
 
 Default value: `'0.0.0.0'`
 
-##### `port`
+##### <a name="port"></a>`port`
 
 Data type: `Simplib::Port`
 
@@ -65,7 +95,7 @@ The port upon which to accept connections
 
 Default value: `389`
 
-##### `enable_admin_service`
+##### <a name="enable_admin_service"></a>`enable_admin_service`
 
 Data type: `Boolean`
 
@@ -73,7 +103,7 @@ Enable the administrative interface for the GUI
 
 Default value: ``false``
 
-##### `admin_user`
+##### <a name="admin_user"></a>`admin_user`
 
 Data type: `String[2]`
 
@@ -81,7 +111,7 @@ The administrative user for administrative GUI connections
 
 Default value: `'admin'`
 
-##### `admin_service_listen_address`
+##### <a name="admin_service_listen_address"></a>`admin_service_listen_address`
 
 Data type: `Simplib::IP`
 
@@ -89,7 +119,7 @@ The IP address upon which the administrative interface should listen
 
 Default value: `'0.0.0.0'`
 
-##### `admin_service_port`
+##### <a name="admin_service_port"></a>`admin_service_port`
 
 Data type: `Simplib::Port`
 
@@ -97,23 +127,23 @@ The port upon which the administrative interface should listen
 
 Default value: `9830`
 
-##### `service_user`
+##### <a name="service_user"></a>`service_user`
 
 Data type: `String[1]`
 
 The user that ``389ds`` should run as
 
-Default value: `'nobody'`
+Default value: `'dirsrv'`
 
-##### `service_group`
+##### <a name="service_group"></a>`service_group`
 
 Data type: `String[1]`
 
 The group that ``389ds`` should run as
 
-Default value: `'nobody'`
+Default value: `'dirsrv'`
 
-##### `package_ensure`
+##### <a name="package_ensure"></a>`package_ensure`
 
 Data type: `Simplib::PackageEnsure`
 
@@ -121,230 +151,7 @@ What to do regarding package installation
 
 Default value: `simplib::lookup('simp_options::package_ensure', { 'default_value' => 'installed' })`
 
-##### `initialize_ds_root`
-
-Data type: `Boolean`
-
-
-
-Default value: ``false``
-
-##### `bootstrap_ds_root_defaults`
-
-Data type: `Boolean`
-
-
-
-Default value: ``true``
-
-##### `ds_root_name`
-
-Data type: `String[1]`
-
-
-
-Default value: `'puppet_default_root'`
-
-##### `instances`
-
-Data type: `Hash`
-
-
-
-Default value: `{}`
-
-### `ds389::install`
-
-Set up a local 389DS server
-
-#### Parameters
-
-The following parameters are available in the `ds389::install` class.
-
-##### `package_list`
-
-Data type: `Array[String]`
-
-A list of packages that will installed instead of the internally selected
-packages.
-
-Default value: `['389-ds-base']`
-
-##### `setup_command`
-
-Data type: `Stdlib::Unixpath`
-
-The path to the setup command on the system
-
-Default value: `'/sbin/setup-ds.pl'`
-
-##### `admin_setup_command`
-
-Data type: `Stdlib::Unixpath`
-
-The path to the admin setup command on the system
-
-Default value: `'/sbin/setup-ds-admin.pl'`
-
-##### `enable_admin_service`
-
-Data type: `Boolean`
-
-
-
-Default value: `pick(getvar('ds389::enable_admin_service'), false)`
-
-##### `admin_package_list`
-
-Data type: `Array[String]`
-
-
-
-Default value: `['389-admin', '389-admin-console', '389-ds-console']`
-
-### `ds389::instance::default`
-
-Create a default instance with a common organizational LDIF
-
-#### Parameters
-
-The following parameters are available in the `ds389::instance::default` class.
-
-##### `base_dn`
-
-Data type: `Optional[String[2]]`
-
-The 'base' DN component of the instance
-
-Default value: ``undef``
-
-##### `root_dn`
-
-Data type: `Optional[String[2]]`
-
-The default administrator DN for the instance
-
-Default value: ``undef``
-
-##### `admin_password`
-
-Data type: `Optional[String[2]]`
-
-The password for the ``$admin_user`` and the ``$root_dn``
-
-Default value: ``undef``
-
-##### `listen_address`
-
-Data type: `Simplib::IP`
-
-The IP address upon which to listen
-
-Default value: `'0.0.0.0'`
-
-##### `port`
-
-Data type: `Simplib::Port`
-
-The port upon which to accept connections
-
-Default value: `389`
-
-##### `enable_admin_service`
-
-Data type: `Boolean`
-
-Enable the administrative interface for the GUI
-
-Default value: ``false``
-
-##### `admin_user`
-
-Data type: `String[2]`
-
-The administrative user for administrative GUI connections
-
-Default value: `'admin'`
-
-##### `admin_service_listen_address`
-
-Data type: `Simplib::IP`
-
-The IP address upon which the administrative interface should listen
-
-Default value: `'127.0.0.1'`
-
-##### `admin_service_port`
-
-Data type: `Simplib::Port`
-
-The port upon which the administrative interface should listen
-
-Default value: `9830`
-
-##### `service_user`
-
-Data type: `String[1]`
-
-The user that ``389ds`` should run as
-
-Default value: `'nobody'`
-
-##### `service_group`
-
-Data type: `String[1]`
-
-The group that ``389ds`` should run as
-
-Default value: `'nobody'`
-
-##### `bootstrap_ldif_content`
-
-Data type: `Optional[String[1]]`
-
-The content that should be used to initialize the directory
-
-Default value: ``undef``
-
-##### `instance_name`
-
-Data type: `String[1]`
-
-
-
-##### `bootstrap_with_defaults`
-
-Data type: `Boolean`
-
-
-
-Default value: ``true``
-
-##### `admin_domain`
-
-Data type: `Simplib::Domain`
-
-
-
-Default value: `$facts['domain']`
-
-##### `machine_name`
-
-Data type: `String[1]`
-
-
-
-Default value: `$facts['fqdn']`
-
-##### `ds_setup_ini_content`
-
-Data type: `Optional[String[1]]`
-
-
-
-Default value: ``undef``
-
-##### `config_dir`
+##### <a name="config_dir"></a>`config_dir`
 
 Data type: `Stdlib::Absolutepath`
 
@@ -352,7 +159,183 @@ Data type: `Stdlib::Absolutepath`
 
 Default value: `'/usr/share/puppet_ds389_config'`
 
-##### `users_group_id`
+##### <a name="initialize_ds_root"></a>`initialize_ds_root`
+
+Data type: `Boolean`
+
+
+
+Default value: ``false``
+
+##### <a name="bootstrap_ds_root_defaults"></a>`bootstrap_ds_root_defaults`
+
+Data type: `Boolean`
+
+
+
+Default value: ``true``
+
+##### <a name="ds_root_name"></a>`ds_root_name`
+
+Data type: `String[1]`
+
+
+
+Default value: `'puppet_default'`
+
+##### <a name="instances"></a>`instances`
+
+Data type: `Hash`
+
+
+
+Default value: `{}`
+
+### <a name="ds389install"></a>`ds389::install`
+
+Set up a local 389DS server
+
+#### Parameters
+
+The following parameters are available in the `ds389::install` class:
+
+* [`package_list`](#package_list)
+* [`setup_command`](#setup_command)
+* [`admin_setup_command`](#admin_setup_command)
+* [`enable_admin_service`](#enable_admin_service)
+* [`admin_package_list`](#admin_package_list)
+* [`dnf_module`](#dnf_module)
+* [`dnf_stream`](#dnf_stream)
+* [`dnf_profile`](#dnf_profile)
+
+##### <a name="package_list"></a>`package_list`
+
+Data type: `Optional[Array[String[1]]]`
+
+A list of packages that will installed instead of the internally selected
+packages.
+
+Default value: ``undef``
+
+##### <a name="setup_command"></a>`setup_command`
+
+Data type: `Stdlib::Unixpath`
+
+The path to the setup command on the system
+
+Default value: `'/sbin/setup-ds.pl'`
+
+##### <a name="admin_setup_command"></a>`admin_setup_command`
+
+Data type: `Stdlib::Unixpath`
+
+The path to the admin setup command on the system
+
+Default value: `'/sbin/setup-ds-admin.pl'`
+
+##### <a name="enable_admin_service"></a>`enable_admin_service`
+
+Data type: `Boolean`
+
+
+
+Default value: `pick(getvar('ds389::enable_admin_service'), false)`
+
+##### <a name="admin_package_list"></a>`admin_package_list`
+
+Data type: `Optional[Array[String[1]]]`
+
+
+
+Default value: ``undef``
+
+##### <a name="dnf_module"></a>`dnf_module`
+
+Data type: `Optional[String[1]]`
+
+
+
+Default value: ``undef``
+
+##### <a name="dnf_stream"></a>`dnf_stream`
+
+Data type: `Optional[String[1]]`
+
+
+
+Default value: ``undef``
+
+##### <a name="dnf_profile"></a>`dnf_profile`
+
+Data type: `Optional[String[1]]`
+
+
+
+Default value: ``undef``
+
+### <a name="ds389instancedefault"></a>`ds389::instance::default`
+
+Create a default instance with a common organizational LDIF
+
+#### Parameters
+
+The following parameters are available in the `ds389::instance::default` class:
+
+* [`instance_name`](#instance_name)
+* [`listen_address`](#listen_address)
+* [`bootstrap_with_defaults`](#bootstrap_with_defaults)
+* [`instance_params`](#instance_params)
+* [`base_dn`](#base_dn)
+* [`users_group_id`](#users_group_id)
+* [`administrators_group_id`](#administrators_group_id)
+
+##### <a name="instance_name"></a>`instance_name`
+
+Data type: `String[1]`
+
+The unique name of this instance
+
+Default value: `'puppet_default'`
+
+##### <a name="listen_address"></a>`listen_address`
+
+Data type: `Simplib::IP`
+
+The IP address upon which to listen
+
+Default value: `'0.0.0.0'`
+
+##### <a name="bootstrap_with_defaults"></a>`bootstrap_with_defaults`
+
+Data type: `Boolean`
+
+Whether to use the inbuilt user/group directory structure
+
+* If this is `true`, the traditional layout that the SIMP LDAP system has provided
+  will be used
+* If this is `false`, the internal 389DS layout will be used
+  * NOTE: other SIMP module defaults may not work without alteration
+
+Default value: ``true``
+
+##### <a name="instance_params"></a>`instance_params`
+
+Data type: `Hash`
+
+Any other arguments that you wish to pass through directly to the
+`ds389::instance` Defined Type.
+
+Default value: `{}`
+
+##### <a name="base_dn"></a>`base_dn`
+
+Data type: `String[2]`
+
+
+
+Default value: `simplib::lookup('simp_options::ldap::base_dn', { 'default_value' => sprintf(simplib::ldap::domain_to_dn($facts['domain'], true)) })`
+
+##### <a name="users_group_id"></a>`users_group_id`
 
 Data type: `Integer[1]`
 
@@ -360,7 +343,7 @@ Data type: `Integer[1]`
 
 Default value: `100`
 
-##### `administrators_group_id`
+##### <a name="administrators_group_id"></a>`administrators_group_id`
 
 Data type: `Integer[500]`
 
@@ -370,21 +353,34 @@ Default value: `700`
 
 ## Defined types
 
-### `ds389::config::item`
+### <a name="ds389configitem"></a>`ds389::config::item`
 
 Modifies the running directory server configuration and restarts the service
 when necessary.
 
-**IMPORTANT** Do not set sensitive values with this until it switches over to
-being a native type!
+NOTE: When calling this defined type as you first set up an instance, you
+will need to pass in all parameters since the fact will not yet be fully
+populated.
 
 #### Parameters
 
-The following parameters are available in the `ds389::config::item` defined type.
+The following parameters are available in the `ds389::config::item` defined type:
 
-##### `key`
+* [`key`](#key)
+* [`value`](#value)
+* [`base_dn`](#base_dn)
+* [`instance_name`](#instance_name)
+* [`admin_dn`](#admin_dn)
+* [`admin_pw_file`](#admin_pw_file)
+* [`port`](#port)
+* [`force_ldapi`](#force_ldapi)
+* [`restart_instance`](#restart_instance)
+* [`config_items`](#config_items)
+* [`host`](#host)
 
-Data type: `String[1]`
+##### <a name="key"></a>`key`
+
+Data type: `Optional[String[1]]`
 
 The configuration key to be set
 
@@ -393,84 +389,125 @@ The configuration key to be set
     -y /usr/share/puppet_ds389_config/<instance_name>_ds_pw.txt \
     -D "cn=SIMP Directory Manager" -s base -b "cn=config"``
 
-##### `value`
+Default value: ``undef``
 
-Data type: `String[1]`
+##### <a name="value"></a>`value`
 
-The value that should be set for ``$key``
+Data type: `Optional[String[1]]`
 
-##### `admin_dn`
+The value that should be set for `$key`
+
+Default value: ``undef``
+
+##### <a name="base_dn"></a>`base_dn`
 
 Data type: `String[2]`
 
-A DN with administrative rights to the directory
+The base DN under which to search
 
-##### `pw_file`
+Default value: `'cn=config'`
 
-Data type: `Stdlib::Absolutepath`
-
-A file containing the password for use with ``$admin_dn``
-
-##### `service_name`
+##### <a name="instance_name"></a>`instance_name`
 
 Data type: `Simplib::Systemd::ServiceName`
 
 The Puppet resource name for the directory ``Service`` resource
 
-##### `restart_service`
+##### <a name="admin_dn"></a>`admin_dn`
+
+Data type: `Optional[String[2]]`
+
+A DN with administrative rights to the directory
+
+* Will be determined automatically if not set
+
+Default value: ``undef``
+
+##### <a name="admin_pw_file"></a>`admin_pw_file`
+
+Data type: `Optional[Stdlib::Absolutepath]`
+
+A file containing the password for use with ``$admin_dn``
+
+* Defaults to `$ds389::config_dir/<usual pw file>`
+
+Default value: ``undef``
+
+##### <a name="port"></a>`port`
+
+Data type: `Optional[Simplib::Port]`
+
+The port to which to connect
+
+* Has no effect if LDAPI is enabled on the instance
+* Will be determined automatically if not set
+
+Default value: ``undef``
+
+##### <a name="force_ldapi"></a>`force_ldapi`
+
+Data type: `Boolean`
+
+Force the system to use the LDAPI interface
+
+* Generally only useful during bootstrapping
+
+Default value: ``false``
+
+##### <a name="restart_instance"></a>`restart_instance`
 
 Data type: `Boolean`
 
 Whether or not to restart the directory server after applying this item
 
-  * There is a known list of items in the module data that will always
-    generate a restart action
+* This may be enabled automatically by `$config_items`
 
 Default value: ``false``
 
-##### `host`
+##### <a name="config_items"></a>`config_items`
 
-Data type: `Simplib::Host`
+Data type: `Ds389::ConfigItems`
 
-The host where the service is running
 
-Default value: `'127.0.0.1'`
 
-##### `port`
+Default value: `{}`
 
-Data type: `Simplib::Port`
+##### <a name="host"></a>`host`
 
-The port to which to connect
+Data type: `Optional[Simplib::Host]`
 
-Default value: `389`
 
-##### `base_dn`
 
-Data type: `String[2]`
+Default value: ``undef``
 
-The DN that holds the directory configuration items
-
-Default value: `'cn=config'`
-
-##### `encrypt_connection`
-
-Data type: `Boolean`
-
-If set to `false`, do not require encryption for off-host connections.
-
-* Loopback connections are never encrypted.
-
-Default value: ``true``
-
-### `ds389::instance`
+### <a name="ds389instance"></a>`ds389::instance`
 
 Set up a local 389DS server
 
 #### Parameters
 
-The following parameters are available in the `ds389::instance` defined type.
+The following parameters are available in the `ds389::instance` defined type:
 
-##### `base_dn`
+* [`base_dn`](#base_dn)
+* [`root_dn`](#root_dn)
+* [`admin_password`](#admin_password)
+* [`listen_address`](#listen_address)
+* [`port`](#port)
+* [`enable_admin_service`](#enable_admin_service)
+* [`admin_user`](#admin_user)
+* [`admin_service_listen_address`](#admin_service_listen_address)
+* [`admin_service_port`](#admin_service_port)
+* [`service_user`](#service_user)
+* [`service_group`](#service_group)
+* [`bootstrap_ldif_content`](#bootstrap_ldif_content)
+* [`general_config`](#general_config)
+* [`package_ensure`](#package_ensure)
+* [`ensure`](#ensure)
+* [`admin_domain`](#admin_domain)
+* [`machine_name`](#machine_name)
+* [`ds_setup_ini_content`](#ds_setup_ini_content)
+
+##### <a name="base_dn"></a>`base_dn`
 
 Data type: `Optional[String[2]]`
 
@@ -478,23 +515,29 @@ The 'base' DN component of the directory server
 
 Default value: ``undef``
 
-##### `root_dn`
+##### <a name="root_dn"></a>`root_dn`
 
-Data type: `Optional[String[2]]`
+Data type: `Optional[Pattern['^[\S]+$']]`
 
 The default administrator DN for the directory server
 
+* NOTE: To work around certain application bugs, items with spaces may not
+  be used in this field.
+
 Default value: ``undef``
 
-##### `admin_password`
+##### <a name="admin_password"></a>`admin_password`
 
-Data type: `Optional[String[2]]`
+Data type: `Optional[Pattern['^[\S]+$']]`
 
 The password for the ``$admin_user`` and the ``$root_dn``
 
+* NOTE: To work around certain application bugs, items with spaces may not
+  be used in this field.
+
 Default value: ``undef``
 
-##### `listen_address`
+##### <a name="listen_address"></a>`listen_address`
 
 Data type: `Simplib::IP`
 
@@ -502,7 +545,7 @@ The IP address upon which to listen
 
 Default value: `'127.0.0.1'`
 
-##### `port`
+##### <a name="port"></a>`port`
 
 Data type: `Simplib::Port`
 
@@ -510,7 +553,7 @@ The port upon which to accept connections
 
 Default value: `389`
 
-##### `enable_admin_service`
+##### <a name="enable_admin_service"></a>`enable_admin_service`
 
 Data type: `Boolean`
 
@@ -518,7 +561,7 @@ Enable the administrative interface for the GUI
 
 Default value: ``false``
 
-##### `admin_user`
+##### <a name="admin_user"></a>`admin_user`
 
 Data type: `String[2]`
 
@@ -526,7 +569,7 @@ The administrative user for administrative GUI connections
 
 Default value: `'admin'`
 
-##### `admin_service_listen_address`
+##### <a name="admin_service_listen_address"></a>`admin_service_listen_address`
 
 Data type: `Simplib::IP`
 
@@ -534,7 +577,7 @@ The IP address upon which the administrative interface should listen
 
 Default value: `'127.0.0.1'`
 
-##### `admin_service_port`
+##### <a name="admin_service_port"></a>`admin_service_port`
 
 Data type: `Simplib::Port`
 
@@ -542,23 +585,23 @@ The port upon which the administrative interface should listen
 
 Default value: `9830`
 
-##### `service_user`
+##### <a name="service_user"></a>`service_user`
 
 Data type: `String[1]`
 
 The user that ``389ds`` should run as
 
-Default value: `'nobody'`
+Default value: `'dirsrv'`
 
-##### `service_group`
+##### <a name="service_group"></a>`service_group`
 
 Data type: `String[1]`
 
 The group that ``389ds`` should run as
 
-Default value: `'nobody'`
+Default value: `'dirsrv'`
 
-##### `bootstrap_ldif_content`
+##### <a name="bootstrap_ldif_content"></a>`bootstrap_ldif_content`
 
 Data type: `Optional[String[1]]`
 
@@ -566,7 +609,18 @@ The content that should be used to initialize the directory
 
 Default value: ``undef``
 
-##### `package_ensure`
+##### <a name="general_config"></a>`general_config`
+
+Data type: `Ds389::ConfigItem`
+
+General configuration items for the instance
+
+* These items fall under the `cn=config` root and will take precedence over
+  any conflicting, more specific, Hashes
+
+Default value: `simplib::dlookup('ds389::instance', 'general_config', {'default_value' => {} })`
+
+##### <a name="package_ensure"></a>`package_ensure`
 
 Data type: `Simplib::PackageEnsure`
 
@@ -574,7 +628,7 @@ What to do regarding package installation
 
 Default value: `simplib::lookup('simp_options::package_ensure', { 'default_value' => 'installed' })`
 
-##### `ensure`
+##### <a name="ensure"></a>`ensure`
 
 Data type: `Enum['present','absent']`
 
@@ -582,7 +636,7 @@ Data type: `Enum['present','absent']`
 
 Default value: `'present'`
 
-##### `admin_domain`
+##### <a name="admin_domain"></a>`admin_domain`
 
 Data type: `Simplib::Domain`
 
@@ -590,7 +644,7 @@ Data type: `Simplib::Domain`
 
 Default value: `$facts['domain']`
 
-##### `machine_name`
+##### <a name="machine_name"></a>`machine_name`
 
 Data type: `String[1]`
 
@@ -598,7 +652,7 @@ Data type: `String[1]`
 
 Default value: `$facts['fqdn']`
 
-##### `ds_setup_ini_content`
+##### <a name="ds_setup_ini_content"></a>`ds_setup_ini_content`
 
 Data type: `Optional[String[1]]`
 
@@ -606,11 +660,61 @@ Data type: `Optional[String[1]]`
 
 Default value: ``undef``
 
-##### `config_dir`
+### <a name="ds389instanceservice"></a>`ds389::instance::service`
 
-Data type: `Stdlib::Absolutepath`
+Configure an instance service
+
+#### Parameters
+
+The following parameters are available in the `ds389::instance::service` defined type:
+
+* [`ensure`](#ensure)
+* [`enable`](#enable)
+* [`hasrestart`](#hasrestart)
+
+##### <a name="ensure"></a>`ensure`
+
+Data type: `Enum['stopped','running']`
 
 
 
-Default value: `'/usr/share/puppet_ds389_config'`
+Default value: `simplib::dlookup('ds389::instance::service', 'ensure', $name, { 'default_value' => 'running'})`
+
+##### <a name="enable"></a>`enable`
+
+Data type: `Boolean`
+
+
+
+Default value: `simplib::dlookup('ds389::instance::service', 'enable', $name, { 'default_value' => true})`
+
+##### <a name="hasrestart"></a>`hasrestart`
+
+Data type: `Boolean`
+
+
+
+Default value: `simplib::dlookup('ds389::instance::service', 'hasrestart', $name, { 'default_value' => true})`
+
+## Data types
+
+### <a name="ds389configitem"></a>`Ds389::ConfigItem`
+
+Valid configuration item
+
+Alias of
+
+```puppet
+Hash[String[1], Variant[Boolean,Integer[0],Float[0],String[1],Array[String[1],1]]]
+```
+
+### <a name="ds389configitems"></a>`Ds389::ConfigItems`
+
+Valid configuration items Hash
+
+Alias of
+
+```puppet
+Hash[Pattern['^cn=.+'], Ds389::ConfigItem]
+```
 
