@@ -8,12 +8,10 @@ describe 'sssd' do
       {
         'simp_options::pki'             => true,
         'simp_options::pki::source'     => '/etc/pki/simp-testing/pki',
-        'simp_options::clamav'          => true,
         'simp_options::firewall'        => true,
         'simp_options::haveged'         => true,
         'simp_options::logrotate'       => true,
         'simp_options::pam'             => true,
-        'simp_options::selinux'         => true,
         'simp_options::stunnel'         => true,
         'simp_options::syslog'          => true,
         'simp_options::tcpwrappers'     => true,
