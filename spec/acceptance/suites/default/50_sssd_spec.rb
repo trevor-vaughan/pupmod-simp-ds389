@@ -42,18 +42,6 @@ describe 'sssd' do
         include '::sssd::service::sudo'
         include '::sssd::service::ssh'
 
-        # LOCAL CONFIG
-        sssd::domain { 'LOCAL':
-          description       => 'LOCAL Users Domain',
-          id_provider       => 'local',
-          auth_provider     => 'local',
-          access_provider   => 'permit',
-          min_id            => 1000,
-          enumerate         => false,
-          cache_credentials => false
-        }
-        sssd::provider::local { 'LOCAL': }
-
         # LDAP CONFIG
         sssd::domain { 'LDAP':
           description       => 'LDAP Users Domain',
@@ -111,6 +99,8 @@ describe 'sssd' do
           hieradata['simp_options::ldap::uri'] = ["ldap://#{fact_on(host, 'fqdn')}"]
 
           set_hieradata_on(host, hieradata)
+          apply_manifest_on(host, manifest)
+          # Allow it to flip the ldap_access_order since sssd is now installed
           apply_manifest_on(host, manifest)
         end
       end

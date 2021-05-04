@@ -30,7 +30,7 @@ jobs:
       - name: install podman
         run: |
           set -x
-          sudo apt-get remove -y docker-ce docker docker-engine docker.io containerd runc ||:
+          sudo apt-get remove -y podman docker-ce docker docker-engine docker.io containerd runc ||:
           curl -L https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_$( lsb_release -rs )/Release.key | sudo apt-key add -
           echo  "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_$( lsb_release -rs )/ /" | sudo tee /etc/apt/sources.list.d/podman.list /dev/null
           sudo apt-get update
