@@ -9,7 +9,7 @@ define ds389::instance::tls (
   Stdlib::Absolutepath                      $root_pw_file,
   Variant[Boolean, Enum['disabled','simp']] $ensure        = simplib::lookup('simp_options::pki', { 'default_value' => false}),
   Simplib::Port                             $port          = 636,
-  String[1]                                 $source        = simplib::lookup('simp_options::pki', { 'default_value' => "/etc/pki/simp/${module_name}_${title}"}),
+  Optional[String[1]]                       $source        = undef,
   Stdlib::Absolutepath                      $cert          = "/etc/pki/simp_apps/${module_name}_${title}/x509/public/${facts['fqdn']}.pub",
   Stdlib::Absolutepath                      $key           = "/etc/pki/simp_apps/${module_name}_${title}/x509/private/${facts['fqdn']}.pem",
   Stdlib::Absolutepath                      $cafile        = "/etc/pki/simp_apps/${module_name}_${title}/x509/cacerts/cacerts.pem",
