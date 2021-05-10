@@ -190,7 +190,7 @@ describe 'ds389::instance', type: :define do
                 .with_root_pw_file('/usr/share/puppet_ds389_config/test_ds_pw.txt')
                 .with_service_group('dirsrv')
                 .with_ensure(params['enable_tls'])
-                .with_source('/etc/pki/simp/ds389_test')
+                .with_source('/etc/pki/simp/x509')
                 .with_cert("/etc/pki/simp_apps/ds389_test/x509/public/#{facts[:fqdn]}.pub")
                 .with_key("/etc/pki/simp_apps/ds389_test/x509/private/#{facts[:fqdn]}.pem")
                 .with_cafile('/etc/pki/simp_apps/ds389_test/x509/cacerts/cacerts.pem')
