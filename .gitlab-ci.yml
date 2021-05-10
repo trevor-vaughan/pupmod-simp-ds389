@@ -314,12 +314,11 @@ pup6.18.0:
   script:
     - 'bundle exec rake beaker:suites[default]'
 
-# SIMP-9653
-#pup6.18.0-fips:
-#  <<: *pup_6_18_0
-#  <<: *acceptance_base
-#  script:
-#    - 'BEAKER_fips=yes bundle exec rake beaker:suites[default]'
+pup6.18.0-fips:
+  <<: *pup_6_18_0
+  <<: *acceptance_base
+  script:
+    - 'BEAKER_fips=yes bundle exec rake beaker:suites[default]'
 
 pup6.18.0-oel:
   <<: *pup_6_18_0

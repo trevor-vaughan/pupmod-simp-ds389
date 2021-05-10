@@ -58,6 +58,7 @@ define ds389::instance (
   Optional[String[1]]            $bootstrap_ldif_content = undef,
   Optional[String[1]]            $ds_setup_ini_content   = undef,
   Ds389::ConfigItem              $general_config         = simplib::dlookup('ds389::instance', 'general_config', {'default_value' => {} }),
+  Ds389::ConfigItem              $password_policy        = simplib::dlookup('ds389::instance', 'password_policy', {'default_value' => {} }),
   Variant[Boolean, Enum['simp']] $enable_tls             = simplib::lookup('simp_options::pki', { 'default_value' => false }),
   Hash                           $tls_params             = simplib::dlookup('ds389::instance', 'tls_params', { 'default_value' => {} }),
   Simplib::PackageEnsure         $package_ensure         = simplib::lookup('simp_options::package_ensure', { 'default_value' => 'installed' })
@@ -120,8 +121,11 @@ define ds389::instance (
           owner   => 'root',
           group   => $service_group,
           mode    => '0640',
-          content => Sensitive($bootstrap_ldif_content),
-          notify  => Exec["Setup ${title} DS"]
+          content => Sensitive($bootstrap_ldif_content)
+        }
+
+        unless $title in pick($facts['ds389__instances'], {}).keys {
+          File[$_bootstrap_ldif_file] ~> Exec["Setup ${title} DS"]
         }
       }
       else {
@@ -156,15 +160,27 @@ define ds389::instance (
       mode                    => '0600',
       selinux_ignore_defaults => true,
       content                 => Sensitive($_ds_setup_inf),
-      require                 => Class['ds389::install'],
-      notify                  => Exec["Setup ${title} DS"]
+      require                 => Class['ds389::install']
     }
 
-    $_ds_instance_config = "/etc/dirsrv/slapd-${_safe_path}/dse.ldif"
+    unless $title in pick($facts['ds389__instances'], {}).keys {
+      File[$_ds_config_file] ~> Exec["Setup ${title} DS"]
+    }
+
+    $_ds_instance_setup = "/etc/dirsrv/slapd-${_safe_path}/.puppet_bootstrapped"
+    #$_ds_instance_setup = "/etc/dirsrv/slapd-${_safe_path}/dse.ldif"
+
+    if $title in pick($facts['ds389__instances'], {}).keys {
+      exec { "Cleanup Bad Bootstrap for ${title} DS":
+        command => "${ds389::install::remove_command} -i slapd-${title}",
+        creates => $_ds_instance_setup,
+        notify  => Exec["Setup ${title} DS"]
+      }
+    }
 
     exec { "Setup ${title} DS":
-      command => "${ds389::install::setup_command} --silent -f ${_ds_config_file}",
-      creates => $_ds_instance_config,
+      command => "${ds389::install::setup_command} --silent -f ${_ds_config_file} && touch '${_ds_instance_setup}'",
+      creates => $_ds_instance_setup,
       notify  => Ds389::Instance::Service[$title]
     }
 
@@ -187,6 +203,7 @@ define ds389::instance (
       attrs            => {
         'cn=config'    => {
           'nsslapd-ldapilisten' => 'on',
+          'nsslapd-ldapiautobind' => 'on',
           'nsslapd-localssf'    => 99999
         }
       },
@@ -201,7 +218,7 @@ define ds389::instance (
       'cn=config' => {
         'nsslapd-listenhost'       => $listen_address,
         'nsslapd-securelistenhost' => $listen_address
-      }.merge($general_config)
+      }.merge($general_config).merge($password_policy)
     }
     ds389::instance::attr::set { "Core configuration for ${title}":
       instance_name => $title,
@@ -230,13 +247,16 @@ define ds389::instance (
       onlyif  => "/bin/test -d /etc/dirsrv/slapd-${title}"
     }
 
-    ds389::instance::selinux::port { String($port):
-      enable  => false,
-      default => 389
-    }
-    ds389::instance::selinux::port { String($secure_port):
-      enable  => false,
-      default => 636
-    }
+    ensure_resource('ds389::instance::selinux::port', String($port), {
+        enable  => false,
+        default => 389
+      }
+    )
+
+    ensure_resource('ds389::instance::selinux::port', String($secure_port), {
+        enable  => false,
+        default => 636
+      }
+    )
   }
 }

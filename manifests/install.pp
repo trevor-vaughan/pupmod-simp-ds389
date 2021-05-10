@@ -14,7 +14,8 @@ class ds389::install (
   Optional[String[1]]        $dnf_module           = undef,
   Optional[String[1]]        $dnf_stream           = undef,
   Optional[String[1]]        $dnf_profile          = undef,
-  Stdlib::Unixpath           $setup_command        = '/sbin/setup-ds.pl'
+  Stdlib::Unixpath           $setup_command        = '/sbin/setup-ds.pl',
+  Stdlib::Unixpath           $remove_command       = '/sbin/remove-ds.pl'
 ) {
   assert_private()
 

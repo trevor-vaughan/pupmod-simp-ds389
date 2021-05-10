@@ -1,3 +1,10 @@
 ---
 ds389::install::package_list:
   - 389-ds-base-legacy-tools
+
+ds389::instance::password_policy:
+  passwordMaxClassChars: 3
+  passwordMaxSequence: 4
+  passwordMaxSeqSets: 2
+  passwordPalindrome: 'on'
+  passwordDictCheck: 'on'

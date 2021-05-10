@@ -134,12 +134,14 @@ describe 'ds389::instance::tls', type: :define do
                   'nsTLS1' => 'on',
                   'nsTLSAllowClientRenegotiation' => 'on',
                   'sslVersionMax' => 'TLS1.2',
-                  'sslVersionMin' => 'TLS1.2'
+                  'sslVersionMin' => 'TLS1.2',
+                  'nsSSL3Ciphers' => %r{AES_256}
                 },
                 'cn=config' => {
                   'nsslapd-ssl-check-hostname' => 'on',
                   'nsslapd-validate-cert' => 'on',
                   'nsslapd-minssf' => 256,
+                  'nsslapd-require-secure-binds' => 'on',
                   'nsslapd-security' => 'on',
                   'nsslapd-securePort' => 636
                 }
