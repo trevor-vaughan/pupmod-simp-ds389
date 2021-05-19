@@ -1,2 +1,6 @@
+* Wed May 19 2021 Jeanne Greulich <jeanne.greulich@onyxpoint.com> - 0.1.0-0
+- pulled out SIMP specific configuration and moved it to module
+  simp_ds389.
+
 * Tue Mar 16 2021 Trevor Vaughan <tvaughan@onyxpoint.com> - 0.1.0-0
 - Initial release

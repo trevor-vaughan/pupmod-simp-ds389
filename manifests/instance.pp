@@ -39,9 +39,31 @@
 #   * These items fall under the `cn=config` root and will take precedence over
 #     any conflicting, more specific, Hashes
 #
-# @param package_ensure
-#   What to do regarding package installation
+# @param enable_tls
+#   This will enable TLS and affect how the pki certs are configured.
+#   'simp' =>  enables TLS and copies the certs from the puppetserver
+#              using the SIMP pki module.
+#   'true' =>  enables TLS and copies the certs from a location on the
+#              local system. See pki module to see the required
+#              configuration of the directory.
+#   'false'   => Do nothing with the TLS settings.
+#   'disable' => Disable TLS on the instance.
+# @param tls_params
+#   Parameters to pass to the TLS module:
 #
+# @example
+#   Set up an instance where TLS is enabled and the certificates
+#   are located in a directory called /my/local/certdir
+#   ds389::instances { 'bestever':
+#     base_dn => 'dc=best,dc=ever,dc=org',
+#     root_dn => "cn=BestDirectoryManager",
+#     listen_address => '0.0.0.0',
+#     enable_tls => true,
+#     tls_params => {
+#       source => '/my/local/certdir'
+#     }
+#   }
+
 # @author https://github.com/simp/pupmod-simp-ds389/graphs/contributors
 #
 define ds389::instance (
@@ -61,7 +83,6 @@ define ds389::instance (
   Ds389::ConfigItem              $password_policy        = simplib::dlookup('ds389::instance', 'password_policy', {'default_value' => {} }),
   Variant[Boolean, Enum['simp']] $enable_tls             = simplib::lookup('simp_options::pki', { 'default_value' => false }),
   Hash                           $tls_params             = simplib::dlookup('ds389::instance', 'tls_params', { 'default_value' => {} }),
-  Simplib::PackageEnsure         $package_ensure         = simplib::lookup('simp_options::package_ensure', { 'default_value' => 'installed' })
 ) {
   simplib::assert_metadata($module_name)
 
@@ -202,9 +223,9 @@ define ds389::instance (
       instance_name    => $title,
       attrs            => {
         'cn=config'    => {
-          'nsslapd-ldapilisten' => 'on',
+          'nsslapd-ldapilisten'   => 'on',
           'nsslapd-ldapiautobind' => 'on',
-          'nsslapd-localssf'    => 99999
+          'nsslapd-localssf'      => 99999
         }
       },
       root_dn          => $root_dn,
