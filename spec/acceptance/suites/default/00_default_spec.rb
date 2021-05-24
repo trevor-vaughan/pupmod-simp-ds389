@@ -92,6 +92,7 @@ describe 'Set up 389DS' do
     end
 
     context 'with an instance to delete' do
+      # Let passgen auto generate the password and get the password from the file.
       let(:root_dn_password_file) do
         "/usr/share/puppet_ds389_config/#{ds_root_name}_ds_pw.txt"
       end
