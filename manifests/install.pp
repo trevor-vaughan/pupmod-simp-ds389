@@ -13,7 +13,8 @@ class ds389::install (
   Optional[Array[String[1]]] $package_list         = undef,
   Optional[String[1]]        $dnf_module           = undef,
   Optional[String[1]]        $dnf_stream           = undef,
-  Optional[String[1]]        $dnf_profile          = undef,
+  Boolean                    $dnf_enable_only      = false,
+  Optional[String]           $dnf_profile          = undef,
   Stdlib::Unixpath           $setup_command        = '/sbin/setup-ds.pl',
   Stdlib::Unixpath           $remove_command       = '/sbin/remove-ds.pl'
 ) {
@@ -25,9 +26,10 @@ class ds389::install (
 
   if $dnf_module and ( $facts['package_provider'] == 'dnf' ) {
     package { $dnf_module:
-      ensure   => $dnf_stream,
-      flavor   => $dnf_profile,
-      provider => 'dnfmodule'
+      ensure      => $dnf_stream,
+      enable_only => $dnf_enable_only,
+      flavor      => $dnf_profile,
+      provider    => 'dnfmodule'
     }
   }
 
