@@ -19,9 +19,6 @@ describe '389DS with PKI' do
       let(:fqdn) {  fact_on(host, 'fqdn').strip }
       let(:certdir) {'/etc/pki/simp-testing/pki'}
 
-      let(:root_dn_password_file) do
-        "/usr/share/puppet_ds389_config/#{ds_root_name}_ds_pw.txt"
-      end
       let(:hieradata) do
         {
           'ds389::instances'  => {
