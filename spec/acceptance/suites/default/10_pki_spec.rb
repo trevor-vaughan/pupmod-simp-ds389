@@ -10,27 +10,28 @@ describe '389DS with PKI' do
   end
 
   hosts_with_role(hosts, 'directory_server').each do |host|
-    let(:ds_root_name) do
-      'puppet_default'
-    end
-    let(:root_dn_password_file) do
-      "/usr/share/puppet_ds389_config/#{ds_root_name}_ds_pw.txt"
-    end
+    context "on #{host} " do
+      let(:ds_root_name) { 'test_tls' }
+      let(:base_dn) { 'dc=tls,dc=com' }
+      let(:rootpasswd) { 'password'}
+      let(:root_dn) { 'cn=Directory_Manager' }
+      let(:bootstrapldif) { ERB.new(File.read(File.expand_path('files/bootstrap.ldif.erb',File.dirname(__FILE__)))).result(binding) }
+      let(:fqdn) {  fact_on(host, 'fqdn').strip }
+      let(:certdir) {'/etc/pki/simp-testing/pki'}
 
-    fqdn = fact_on(host, 'fqdn').strip
-
-    context 'when enabling PKI in the default instance' do
       let(:hieradata) do
         {
-          'simp_options::ldap::bind_dn' => 'cn=hostAuth,ou=Hosts,dc=test,dc=case',
-          'simp_options::ldap::base_dn' => 'dc=test,dc=case',
-          'simp_options::ldap::bind_pw' => 'asouighoahgh3whg8arewhghaesdhgeahgoha',
-          'simp_options::ldap::bind_hash' => '{SSHA}24M0TnXrhTsYzaaR+T4kDCKhu7dnVNBCG0qPMQ==',
-          'ds389::initialize_ds_root' => true,
-          'ds389::bootstrap_ds_root_defaults' => true,
-          'ds389::instance::default::enable_tls' => true,
-          'ds389::instance::default::tls_params' => {
-            'source' => '/etc/pki/simp-testing/pki'
+          'ds389::instances'  => {
+            ds_root_name => {
+              'base_dn' => "#{base_dn}",
+              'root_dn' => "#{root_dn}",
+              'root_dn_password' => "#{rootpasswd}",
+              'listen_address' => '0.0.0.0',
+              'enable_tls' => true,
+              'tls_params' => {
+                'source' => "#{certdir}"
+              },
+            }
           }
         }
       end
@@ -45,25 +46,25 @@ describe '389DS with PKI' do
       end
 
       it 'can not login to 389DS unencrypted' do
-        expect { on(host, %(ldapsearch -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -h #{fqdn} -b "cn=tasks,cn=config")) }.to raise_error(%r{.+})
+        expect { on(host, %(ldapsearch -x -w "#{rootpasswd}" -D "#{root_dn}" -h #{fqdn} -b "cn=tasks,cn=config")) }.to raise_error(%r{.+})
       end
 
       it 'sets the environment variables for ldapsearch' do
-        host.add_env_var('LDAPTLS_CACERT', '/etc/pki/simp_apps/ds389_puppet_default/x509/cacerts/cacerts.pem')
-        host.add_env_var('LDAPTLS_KEY', "/etc/pki/simp_apps/ds389_puppet_default/x509/private/#{fqdn}.pem")
-        host.add_env_var('LDAPTLS_CERT', "/etc/pki/simp_apps/ds389_puppet_default/x509/public/#{fqdn}.pub")
+        host.add_env_var('LDAPTLS_CACERT', "#{certdir}/cacerts/cacerts.pem")
+        host.add_env_var('LDAPTLS_KEY', "#{certdir}/private/#{fqdn}.pem")
+        host.add_env_var('LDAPTLS_CERT', "#{certdir}/public/#{fqdn}.pub")
       end
 
       it 'can login to 389DS using STARTTLS' do
-        on(host, %(ldapsearch -ZZ -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -H ldap://#{fqdn}:389 -b "cn=tasks,cn=config"))
+        on(host, %(ldapsearch -ZZ -x -w "#{rootpasswd}" -D "#{root_dn}" -H ldap://#{fqdn}:389 -b "cn=tasks,cn=config"))
       end
 
       it 'can login to 389DS using LDAPS' do
-        on(host, %(ldapsearch -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -H ldaps://#{fqdn}:636 -b "cn=tasks,cn=config"))
+        on(host, %(ldapsearch -x -w "#{rootpasswd}" -D "#{root_dn}" -H ldaps://#{fqdn}:636 -b "cn=tasks,cn=config"))
       end
 
       it 'can login to 389DS via LDAPI' do
-        on(host, %(ldapsearch -x -y "#{root_dn_password_file}" -D "cn=Directory_Manager" -H ldapi://%2fvar%2frun%2fslapd-#{ds_root_name}.socket -b "cn=tasks,cn=config"))
+        on(host, %(ldapsearch -x -w "#{rootpasswd}" -D "#{root_dn}" -H ldapi://%2fvar%2frun%2fslapd-#{ds_root_name}.socket -b "cn=tasks,cn=config"))
       end
 
       it 'unsets the environment variables for ldapsearch' do

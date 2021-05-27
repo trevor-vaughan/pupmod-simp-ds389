@@ -1,0 +1,53 @@
+dn: <%= base_dn %>
+dc: test
+objectClass: top
+objectClass: domain
+aci: (targetattr = "aci")(version 3.0;acl "Admins can manage ACIs"; allow (write) groupdn="ldap:///cn=Directory Administrators,ou=Group,<%= base_dn %>";)
+aci: (target=ldap:///<%= base_dn %>)(targetattr=*)(version 3.0; acl "Directory Administrators"; allow(write) groupdn = "ldap:///cn=Directory Administrators,ou=Group,<%= base_dn %>";)
+
+dn: cn=Directory Administrators,<%= base_dn %>
+cn: Directory Administrators
+objectClass: top
+objectClass: groupOfUniqueNames
+uniqueMember: <%= root_dn %>
+
+dn: ou=Hosts,<%= base_dn %>
+ou: Hosts
+objectClass: top
+objectClass: organizationalUnit
+
+dn: cn=localhost.localdomain,ou=Hosts,<%= base_dn %>
+objectClass: top
+objectClass: ipHost
+ipHostNumber: 127.0.0.1
+cn: localhost.localdomain
+cn: localhost
+
+dn: ou=Group,<%= base_dn %>
+ou: Group
+objectClass: top
+objectClass: organizationalUnit
+aci: (targetattr!="userpassword || aci")(version 3.0; acl "Enable Authenticated Group Read Access"; allow (read, search, compare) userdn="ldap:///all";)
+
+dn: ou=People,<%= base_dn %>
+ou: People
+objectClass: top
+objectClass: organizationalUnit
+aci: (targetattr!="userpassword || aci")(version 3.0; acl "Enable Authenticated People Read Access"; allow (read, search, compare) userdn="ldap:///all";)
+aci: (targetattr = "givenname || sn || cn || displayname || title || initials || loginshell || gecos || homephone || mobile || pager || facsimiletelephonenumber || telephonenumber || street || roomnumber || l || st || postalcode || manager || secretary || description || carlicense || labeleduri || inetuserhttpurl || seealso || employeetype  || businesscategory || ou")(version 3.0;acl "selfservice:User Self service";allow (write) userdn = "ldap:///self";)
+aci: (targetattr = "userpassword")(version 3.0; acl "selfservice:Self can write own password"; allow (write) userdn="ldap:///self";)
+aci: (targetattr = "usercertificate")(version 3.0;acl "selfservice:Users can manage their own X.509 certificates";allow (write) userdn = "ldap:///self";)
+
+dn: cn=users,ou=Group,<%= base_dn %>
+objectClass: groupOfUniqueNames
+objectClass: posixGroup
+objectClass: top
+cn: users
+gidNumber: 1000
+
+dn: cn=administrators,ou=Group,<%= base_dn %>
+objectClass: groupOfUniqueNames
+objectClass: posixGroup
+objectClass: top
+cn: administrators
+gidNumber: 1001
