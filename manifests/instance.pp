@@ -41,13 +41,14 @@
 #
 # @param enable_tls
 #   This will enable TLS and affect how the pki certs are configured.
-#   'simp' =>  enables TLS and copies the certs from the puppetserver
-#              using the SIMP pki module.
-#   'true' =>  enables TLS and copies the certs from a location on the
-#              local system. See pki module to see the required
-#              configuration of the directory.
-#   'false'   => Do nothing with the TLS settings.
-#   'disable' => Disable TLS on the instance.
+#   'simp'     => enables TLS and copies the certs from the puppetserver
+#                 using the SIMP pki module.
+#   'true'     => enables TLS and copies the certs from a location on the
+#                 local system. See pki module to see the required
+#                 configuration of the directory.
+#   'false'    => Do nothing with the TLS settings.
+#   'disabled' => Disable TLS on the instance.
+#
 # @param tls_params
 #   Parameters to pass to the TLS module:
 #
@@ -251,6 +252,24 @@ define ds389::instance (
     }
 
     if $enable_tls {
+      # Check to make sure we're not going to have a conflict with something that's running
+      pick($facts['ds389__instances'], {}).each |$daemon, $data| {
+        unless $daemon == $title {
+          if $data['securePort'] == $secure_port {
+            fail("The secure port '${secure_port}' is already in use by '${daemon}'")
+          }
+        }
+      }
+
+      if defined_with_params(Ds389::Instance, { 'ensure' => $ensure, 'secure_port' => $secure_port }) {
+        fail("The secure port '${secure_port}' is already selected for use by another defined catalog resource")
+      }
+
+      ds389::instance::selinux::port { String($secure_port):
+        instance => $title,
+        default  => 636
+      }
+
       ds389::instance::tls { $title:
         ensure        => $enable_tls,
         root_dn       => $root_dn,

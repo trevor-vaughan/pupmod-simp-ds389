@@ -2,6 +2,44 @@
 #
 # Requires LDAPI to be enabled
 #
+# @param root_dn
+#   The default administrator DN for the directory server
+#
+#   * NOTE: To work around certain application bugs, items with spaces may not
+#     be used in this field.
+# @param root_pw_file
+#   Path of file containing pasword fo rthe default administrator DN
+#
+# @param ensure
+#   Ensure of PKI resources managed by this define
+#
+# @param port
+#   The port upon which to accept LDAPS connections
+#
+# @param source
+#   The source location for PKI certificates.  This is the source
+#   directory for pki::copy.
+#
+# @param cert
+#   Path and name of the public SSL certificate
+#
+# @param key
+#   Path and name of the private SSL key file
+#
+# @param cafile
+#   Path and name of the CA file
+#
+# @param dse_config
+#   Custom directory server encryption configuration to be merged with default
+#  and required defaults.
+#
+# @param token
+#   Password token for unattended 389ds starts
+#
+# @param service_group
+#   The group that ``389ds`` should run as
+#
+# @api private
 # @author https://github.com/simp/pupmod-simp-ds389/graphs/contributors
 #
 define ds389::instance::tls (
@@ -55,28 +93,11 @@ define ds389::instance::tls (
       value         => '0'
     }
 
-    ds389::instance::selinux::port { String($port):
-      enable  => false,
-      default => 636
-    }
   }
   else {
     # Check to make sure we're not going to have a conflict with something that's running
-    pick($facts['ds389__instances'], {}).each |$daemon, $data| {
-      unless $daemon == $title {
-        if $data['secure_port'] == $port {
-          fail("The port '${port}' is already in use by '${daemon}'")
-        }
-      }
-    }
-
     if defined_with_params(Ds389::Instance::Tls, { 'ensure' => $ensure, 'port' => $port }) {
       fail("The port '${port}' is already selected for use by another defined catalog resource")
-    }
-
-    ds389::instance::selinux::port { String($port):
-      instance => $title,
-      default  => 636
     }
 
     # Needed to allow unattended starts

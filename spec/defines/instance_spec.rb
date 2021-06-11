@@ -173,11 +173,11 @@ describe 'ds389::instance', type: :define do
             expect(attrs['nsslapd-nagle']).to eq('off')
           }
 
-          context 'with PKI' do
+          context 'with TLS' do
             let(:params) do
               {
-                'base_dn' => 'ou=root,dn=my,dn=domain',
-                'root_dn' => 'cn=Directory_Manager',
+                'base_dn'    => 'ou=root,dn=my,dn=domain',
+                'root_dn'    => 'cn=Directory_Manager',
                 'enable_tls' => true
               }
             end
@@ -269,8 +269,33 @@ describe 'ds389::instance', type: :define do
             }
           end
 
+          context 'with a conflicting secure port' do
+            let(:pre_condition) do
+              <<~MANIFEST
+              ds389::instance { 'pre_test':
+                base_dn    => 'ou=root,dn=my,dn=domain',
+                root_dn    => 'cn=Directory_Manager',
+                port       => 388,
+                enable_tls => true
+              }
+              MANIFEST
+            end
+
+            let(:params) do
+              {
+                'base_dn'    => 'ou=root,dn=my,dn=domain',
+                'root_dn'    => 'cn=Directory_Manager',
+                'enable_tls' => true
+              }
+            end
+
+            it {
+              expect { expect(subject).to compile.with_all_deps }.to raise_error(%r{secure port '636' is already selected for use})
+            }
+          end
+
           context 'with ports in use on the host' do
-            context 'when non-conflicting' do
+            context 'when non-conflicting without TLS' do
               let(:facts) do
                 os_facts.merge(
                   {
@@ -292,7 +317,7 @@ describe 'ds389::instance', type: :define do
               it { is_expected.to compile.with_all_deps }
             end
 
-            context 'when conflicting' do
+            context 'when conflicting without TLS' do
               let(:facts) do
                 os_facts.merge(
                   {
@@ -312,7 +337,72 @@ describe 'ds389::instance', type: :define do
               end
 
               it {
-                expect { expect(subject).to compile.with_all_deps }.to raise_error(%r{is already in use})
+                expect { expect(subject).to compile.with_all_deps }.to raise_error(%r{port '389' is already in use})
+              }
+            end
+
+            context 'when non-conflicting with TLS' do
+              let(:params) do
+                {
+                  'base_dn'    => 'ou=root,dn=my,dn=domain',
+                  'root_dn'    => 'cn=Directory_Manager',
+                  'enable_tls' => true
+                }
+              end
+
+              let(:facts) do
+                os_facts.merge(
+                  {
+                    ds389__instances: {
+                      'admin-srv' => {
+                        'port' => 1234
+                      },
+                      title => {
+                        'port'       => 389,
+                        'securePort' => 636
+                      },
+                      'foo' => {
+                        'port'       => 333,
+                        'securePort' => 635
+                      }
+                    }
+                  },
+                )
+              end
+
+              it { is_expected.to compile.with_all_deps }
+            end
+
+            context 'when conflicting with TLS' do
+              let(:params) do
+                {
+                  'base_dn'    => 'ou=root,dn=my,dn=domain',
+                  'root_dn'    => 'cn=Directory_Manager',
+                  'enable_tls' => true
+                }
+              end
+
+              let(:facts) do
+                os_facts.merge(
+                  {
+                    ds389__instances: {
+                      'admin-srv' => {
+                        'port' => 1234
+                      },
+                      title => {
+                        'port' => 234,
+                      },
+                      'foo' => {
+                        'port'       => 333,
+                        'securePort' => 636
+                      }
+                    }
+                  },
+                )
+              end
+
+              it {
+                expect { expect(subject).to compile.with_all_deps }.to raise_error(%r{secure port '636' is already in use})
               }
             end
           end
