@@ -290,7 +290,7 @@ describe 'ds389::instance', type: :define do
             end
 
             it {
-              expect { expect(subject).to compile.with_all_deps }.to raise_error(%r{secure port '636' is already selected for use})
+              expect { expect(subject).to compile.with_all_deps }.to raise_error(%r{port '636' is already selected for use})
             }
           end
 
@@ -402,7 +402,7 @@ describe 'ds389::instance', type: :define do
               end
 
               it {
-                expect { expect(subject).to compile.with_all_deps }.to raise_error(%r{secure port '636' is already in use})
+                expect { expect(subject).to compile.with_all_deps }.to raise_error(%r{port '636' is already in use})
               }
             end
           end

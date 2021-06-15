@@ -83,6 +83,16 @@ define ds389::instance::tls (
     }
   }
 
+  $_selinux_port_ensure = $ensure ? { false => false, default => true }
+  ds389::instance::selinux::port { String($port):
+    enable  => $_selinux_port_ensure,
+    default => 636,
+    # Leave this commented out until the LDAPI attribute can be moved out into
+    # its own defined typed and called repeatedly.
+    #
+    #instance => $title,
+  }
+
   if $ensure == 'disabled' {
     ds389::instance::attr::set { "Do not require encryption for ${title}":
       instance_name => $title,
@@ -92,10 +102,17 @@ define ds389::instance::tls (
       key           => 'nsslapd-minssf',
       value         => '0'
     }
-
   }
   else {
     # Check to make sure we're not going to have a conflict with something that's running
+    pick($facts['ds389__instances'], {}).each |$daemon, $data| {
+      unless $daemon == $title {
+        if ($data['port'] == $port) or ($data['securePort'] == $port) {
+          fail("The port '${port}' is already in use by '${daemon}'")
+        }
+      }
+    }
+
     if defined_with_params(Ds389::Instance::Tls, { 'ensure' => $ensure, 'port' => $port }) {
       fail("The port '${port}' is already selected for use by another defined catalog resource")
     }
